@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+# kome-osd — on-screen display for volume/brightness via swayosd or fallback.
+
+set -euo pipefail
+
+KOME_STATE_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/kome"
+PROVIDERS_FILE="${KOME_STATE_DIR}/providers.env"
+
+# shellcheck disable=SC1090
+[[ -f "$PROVIDERS_FILE" ]] && source "$PROVIDERS_FILE"
+
+has_swayosd() { command -v swayosd-client >/dev/null 2>&1; }
+
+vol_up()   { has_swayosd && swayosd-client --output-volume raise || wpctl set-volume -l 1.5 @DEFAULT_AUDIO_SINK@ 5%+; }
+vol_down() { has_swayosd && swayosd-client --output-volume lower || wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%-; }
+vol_mute() { has_swayosd && swayosd-client --output-volume mute-toggle || wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle; }
+mic_mute() { wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle; }
+
+bright_up()   { has_swayosd && swayosd-client --backlight raise || brightnessctl -e4 -n2 set 5%+; }
+bright_down() { has_swayosd && swayosd-client --backlight lower || brightnessctl -e4 -n2 set 5%-; }
+
+case "${1:-}" in
+    volume-up)   vol_up ;;
+    volume-down) vol_down ;;
+    volume-mute) vol_mute ;;
+    mic-mute)    mic_mute ;;
+    brightness-up)   bright_up ;;
+    brightness-down) bright_down ;;
+    *) echo "Usage: $0 {volume-up|volume-down|volume-mute|mic-mute|brightness-up|brightness-down}"; exit 1 ;;
+esac

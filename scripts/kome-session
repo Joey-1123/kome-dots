@@ -1,0 +1,95 @@
+#!/usr/bin/env bash
+# kome-session — start/stop/restart desktop session components based on
+# ~/.config/kome/providers.env. This is launched by hyprland autostart.
+
+set -euo pipefail
+
+KOME_STATE_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/kome"
+PROVIDERS_FILE="${KOME_STATE_DIR}/providers.env"
+
+# shellcheck disable=SC1090
+[[ -f "$PROVIDERS_FILE" ]] && source "$PROVIDERS_FILE"
+
+start_component() {
+    local name="$1" cmd="$2"
+    if pgrep -x "$name" >/dev/null 2>&1; then
+        return 0
+    fi
+    # shellcheck disable=SC2086
+    setsid bash -c "$cmd" >/dev/null 2>&1 &
+}
+
+stop_component() {
+    local name="$1"
+    pkill -x "$name" 2>/dev/null || true
+}
+
+start_all() {
+    # polkit agent
+    start_component "polkit-kde-authentication-agent-1" \
+        "/usr/lib/polkit-kde-authentication-agent-1"
+
+    # notification daemon
+    case "${KOME_NOTIFICATIONS:-swaync}" in
+        swaync) start_component "swaync" "swaync" ;;
+        mako)   start_component "mako" "mako" ;;
+        dunst)  start_component "dunst" "dunst" ;;
+    esac
+
+    # status bar
+    case "${KOME_BAR:-waybar}" in
+        waybar)     start_component "waybar" "waybar" ;;
+        quickshell) start_component "quickshell" "quickshell -c shell.qml" ;;
+    esac
+
+    # lock/idle
+    case "${KOME_IDLE:-hypridle}" in
+        hypridle) start_component "hypridle" "hypridle" ;;
+        swayidle) start_component "swayidle" "swayidle" ;;
+    esac
+
+    # wallpaper
+    case "${KOME_WALLPAPER:-hyprpaper}" in
+        hyprpaper) start_component "hyprpaper" "hyprpaper" ;;
+        awww)      start_component "awww-daemon" "awww-daemon" ;;
+    esac
+
+    # clipboard history
+    if [[ "${KOME_CLIPBOARD:-cliphist}" == "cliphist" ]]; then
+        wl-paste --type text --watch cliphist store >/dev/null 2>&1 &
+        wl-paste --type image --watch cliphist store >/dev/null 2>&1 &
+    fi
+
+    # xdg portals
+    systemctl --user import-environment WAYLAND_DISPLAY XDG_CURRENT_DESKTOP 2>/dev/null || true
+    dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP 2>/dev/null || true
+}
+
+stop_all() {
+    case "${KOME_NOTIFICATIONS:-swaync}" in
+        swaync) pkill swaync 2>/dev/null ;;
+        mako)   pkill mako 2>/dev/null ;;
+        dunst)  pkill dunst 2>/dev/null ;;
+    esac
+    case "${KOME_BAR:-waybar}" in
+        waybar)     pkill waybar 2>/dev/null ;;
+        quickshell) pkill quickshell 2>/dev/null ;;
+    esac
+    case "${KOME_IDLE:-hypridle}" in
+        hypridle) pkill hypridle 2>/dev/null ;;
+        swayidle) pkill swayidle 2>/dev/null ;;
+    esac
+    case "${KOME_WALLPAPER:-hyprpaper}" in
+        hyprpaper) pkill hyprpaper 2>/dev/null ;;
+        awww)      pkill awww-daemon 2>/dev/null ;;
+    esac
+    pkill -f "wl-paste.*cliphist" 2>/dev/null || true
+    pkill -f "polkit-kde-authentication-agent-1" 2>/dev/null || true
+}
+
+case "${1:-start}" in
+    start)  start_all ;;
+    stop)   stop_all ;;
+    restart) stop_all; sleep 1; start_all ;;
+    *) echo "Usage: $0 {start|stop|restart}"; exit 1 ;;
+esac

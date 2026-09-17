@@ -1,0 +1,54 @@
+#!/usr/bin/env bash
+# kome-screenshot — screenshot via grim+slurp or hyprshot.
+
+set -euo pipefail
+
+KOME_STATE_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/kome"
+PROVIDERS_FILE="${KOME_STATE_DIR}/providers.env"
+
+# shellcheck disable=SC1090
+[[ -f "$PROVIDERS_FILE" ]] && source "$PROVIDERS_FILE"
+
+SAVE_DIR="${HOME}/Pictures/Screenshots"
+mkdir -p "$SAVE_DIR"
+FILE="${SAVE_DIR}/screenshot_$(date +%Y%m%d_%H%M%S).png"
+
+case "${1:-region}" in
+    region)
+        case "${KOME_SCREENSHOT:-grim}" in
+            grim)
+                grim -g "$(slurp)" "$FILE"
+                ;;
+            hyprshot)
+                hyprshot -m region -o "$SAVE_DIR" -f "$(basename "$FILE")"
+                ;;
+        esac
+        ;;
+    full)
+        case "${KOME_SCREENSHOT:-grim}" in
+            grim)
+                grim "$FILE"
+                ;;
+            hyprshot)
+                hyprshot -m output -o "$SAVE_DIR" -f "$(basename "$FILE")"
+                ;;
+        esac
+        ;;
+    window)
+        case "${KOME_SCREENSHOT:-grim}" in
+            grim)
+                grim -g "$(hyprctl activewindow -j | jq -r '"\(.at[0]),\(.at[1]) \(.size[0])x\(.size[1])"')" "$FILE"
+                ;;
+            hyprshot)
+                hyprshot -m window -o "$SAVE_DIR" -f "$(basename "$FILE")"
+                ;;
+        esac
+        ;;
+    *) echo "Usage: $0 {region|full|window}"; exit 1 ;;
+esac
+
+# copy to clipboard
+wl-copy <"$FILE" 2>/dev/null || true
+
+# notify
+notify-send "Screenshot saved" "$FILE" 2>/dev/null || true

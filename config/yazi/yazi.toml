@@ -1,0 +1,25 @@
+[manager]
+show_hidden = true
+show_symlink_info = true
+mouse_events = true
+mouse_events_ignore_mod = "ctrl"
+mouse_move_preview = true
+preview_loading_text = "Loading..."
+max_preview_width = 80
+ratio = 3
+scheduler = "hybrid"
+sync_dir = "cwd"
+sort_by = "name"
+sort_sensitive = false
+sort_dir_first = true
+sort_translit = true
+linemode = "size_and_mtime"
+show_link_count = false
+show_border = true
+
+[preview]
+image_precise = true
+text_preview_paragraphs = 20
+
+[hooks]
+prepend_previewer = "bat --color=always --style=numbers {}"

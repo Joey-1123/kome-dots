@@ -1,0 +1,34 @@
+# kome full profile — everything in standard plus shells, boot theming,
+# screenshot annotation, extra fonts, and 43PR-inspired additions.
+
+# additional shells (the installer also lets the user pick these explicitly)
+zsh
+zsh-completions
+zsh-autosuggestions
+zsh-syntax-highlighting
+fish
+
+# screenshot annotation / utilities
+satty
+wl-clip-persist
+
+# boot + system integration (Plymouth/GRUB use is opt-in, see installer)
+plymouth
+grub-btrfs
+
+# extra fonts
+ttf-cascadia-code-nerd
+ttf-firacode-nerd
+ttf-font-awesome
+
+# 43PR-inspired additions
+cava
+nvtop
+xed
+unzip
+curl
+wlogout
+hyprmod
+
+# media
+spotify-launcher

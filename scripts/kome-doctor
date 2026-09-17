@@ -1,0 +1,88 @@
+#!/usr/bin/env bash
+# kome-doctor — diagnostics for the kome installation.
+
+set -euo pipefail
+
+KOME_STATE_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/kome"
+PROVIDERS_FILE="${KOME_STATE_DIR}/providers.env"
+
+# shellcheck disable=SC1090
+[[ -f "$PROVIDERS_FILE" ]] && source "$PROVIDERS_FILE"
+
+ok() { printf '\033[32m[OK]\033[0m %s\n' "$*"; }
+warn() { printf '\033[33m[WARN]\033[0m %s\n' "$*"; }
+err() { printf '\033[31m[ERR]\033[0m %s\n' "$*"; }
+
+echo "=== kome doctor ==="
+echo "State dir: $KOME_STATE_DIR"
+echo "Providers: ${PROVIDERS_FILE}"
+echo ""
+
+# providers
+echo "--- Providers ---"
+for c in bar lock idle wallpaper notifications launcher osd screenshot clipboard filemanager; do
+    var="KOME_${c^^}"
+    printf '  %-14s: %s\n' "$c" "${!var:-unset}"
+done
+
+# hyprland config
+echo ""
+echo "--- Hyprland ---"
+if hyprland --verify-config -c "${HOME}/.config/hypr/hyprland.lua" >/dev/null 2>&1; then
+    ok "hyprland.lua syntax OK"
+else
+    err "hyprland.lua has errors (run: hyprland --verify-config)"
+fi
+
+# running daemons
+echo ""
+echo "--- Daemons ---"
+for d in waybar swaync mako dunst hypridle hyprpaper hyprlock awww polkit-kde-authentication-agent-1; do
+    if pgrep -x "$d" >/dev/null; then
+        ok "$d running"
+    else
+        warn "$d not running"
+    fi
+done
+
+# matugen
+echo ""
+echo "--- Theming ---"
+if command -v matugen >/dev/null; then
+    ok "matugen installed"
+else
+    warn "matugen not installed"
+fi
+
+# config symlinks
+echo ""
+echo "--- Config Links ---"
+for dir in hypr kitty waybar rofi swaync mako dunst wofi fuzzel yazi matugen gtk-3.0 gtk-4.0 qt6ct; do
+    target="${HOME}/.config/$dir"
+    if [[ -L "$target" ]]; then
+        src="$(readlink -f "$target")"
+        if [[ "$src" == *"projects/rice/config"* ]]; then
+            ok "$dir linked"
+        else
+            warn "$dir linked elsewhere: $src"
+        fi
+    elif [[ -d "$target" ]]; then
+        warn "$dir exists but not a symlink"
+    else
+        warn "$dir missing"
+    fi
+done
+
+# scripts in PATH
+echo ""
+echo "--- Scripts ---"
+for s in kome-session kome-theme kome-wallpaper kome-lock kome-powermenu kome-bar kome-screenshot kome-clipboard kome-files kome-osd kome-doctor kome-notify kome-browser; do
+    if command -v "$s" >/dev/null; then
+        ok "$s in PATH"
+    else
+        warn "$s not in PATH"
+    fi
+done
+
+echo ""
+echo "=== done ==="

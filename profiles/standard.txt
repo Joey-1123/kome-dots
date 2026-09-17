@@ -1,0 +1,47 @@
+# kome standard profile — recommended default.
+# Adds a practical CLI toolset, file manager extras, tray applets,
+# GUI theming tools, and 43PR-inspired apps.
+
+# shell + prompt + CLI quality of life
+starship
+eza
+bat
+fd
+ripgrep
+fzf
+zoxide
+
+# file manager (yazi comes from the provider registry)
+thunar
+gvfs
+gvfs-mtp
+tumbler
+
+# tray applets
+network-manager-applet
+blueman
+
+# GUI theming
+nwg-look
+qt6ct
+kvantum
+papirus-folders
+
+# 43PR-inspired: wallpaper daemon & quickshell alternative
+awww
+quickshell
+
+# media & utilities
+mpv
+gammastep
+brightnessctl
+btop
+fastfetch
+jq
+
+# clipboard / screenshot tools (provider handles grim/slurp/cliphist)
+# hyprshot alternative
+hyprshot
+
+# gpu screen recorder
+gpu-screen-recorder

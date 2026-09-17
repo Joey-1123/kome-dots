@@ -1,0 +1,7 @@
+{
+    "wallpaper_path": "Pictures/Wallpapers",
+    "cache_path": ".cache/kome/hyprquickpaper/thumbs",
+    "cache_batch_size": 4,
+    "number_of_pictures": 6,
+    "border_color": "#ffffff"
+}

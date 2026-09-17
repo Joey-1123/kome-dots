@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+# kome-lock — lock screen via configured provider.
+
+set -euo pipefail
+
+KOME_STATE_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/kome"
+PROVIDERS_FILE="${KOME_STATE_DIR}/providers.env"
+
+# shellcheck disable=SC1090
+[[ -f "$PROVIDERS_FILE" ]] && source "$PROVIDERS_FILE"
+
+case "${KOME_LOCK:-hyprlock}" in
+    hyprlock) exec hyprlock ;;
+    swaylock) exec swaylock ;;
+    *) echo "unknown lock provider: ${KOME_LOCK}" >&2; exit 1 ;;
+esac

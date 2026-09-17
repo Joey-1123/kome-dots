@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+# kome-clipboard — clipboard history via cliphist + rofi/wofi/fuzzel.
+
+set -euo pipefail
+
+KOME_STATE_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/kome"
+PROVIDERS_FILE="${KOME_STATE_DIR}/providers.env"
+
+# shellcheck disable=SC1090
+[[ -f "$PROVIDERS_FILE" ]] && source "$PROVIDERS_FILE"
+
+if ! command -v cliphist >/dev/null 2>&1; then
+    notify-send "cliphist not installed" 2>/dev/null || true
+    exit 1
+fi
+
+case "${KOME_LAUNCHER:-rofi}" in
+    rofi)
+        cliphist list | rofi -dmenu -p "Clipboard" -theme-str 'listview {lines: 15;}' | cliphist decode | wl-copy
+        ;;
+    wofi)
+        cliphist list | wofi --dmenu -p "Clipboard" | cliphist decode | wl-copy
+        ;;
+    fuzzel)
+        cliphist list | fuzzel --dmenu -p "Clipboard" | cliphist decode | wl-copy
+        ;;
+esac

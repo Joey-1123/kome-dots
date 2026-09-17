@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+# kome-browser — open default browser (detected or $BROWSER).
+
+set -euo pipefail
+
+# shellcheck disable=SC2086
+if [[ -n "${BROWSER:-}" ]]; then
+    exec $BROWSER "$@"
+fi
+
+for b in zen-browser firefox google-chrome-stable chromium brave-browser vivaldi; do
+    if command -v "$b" >/dev/null 2>&1; then
+        exec "$b" "$@"
+    fi
+done
+
+echo "no browser found" >&2
+exit 1

@@ -1,0 +1,38 @@
+#!/usr/bin/env bash
+# kome-bar — toggle/restart status bar.
+
+set -euo pipefail
+
+KOME_STATE_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/kome"
+PROVIDERS_FILE="${KOME_STATE_DIR}/providers.env"
+
+# shellcheck disable=SC1090
+[[ -f "$PROVIDERS_FILE" ]] && source "$PROVIDERS_FILE"
+
+case "${1:-toggle}" in
+    toggle)
+        case "${KOME_BAR:-waybar}" in
+            waybar)
+                if pgrep -x waybar >/dev/null; then
+                    pkill waybar
+                else
+                    waybar &
+                fi
+                ;;
+            quickshell)
+                if pgrep -x quickshell >/dev/null; then
+                    pkill quickshell
+                else
+                    quickshell -c shell.qml &
+                fi
+                ;;
+        esac
+        ;;
+    restart)
+        case "${KOME_BAR:-waybar}" in
+            waybar) pkill waybar; waybar & ;;
+            quickshell) pkill quickshell; quickshell -c shell.qml & ;;
+        esac
+        ;;
+    *) echo "Usage: $0 {toggle|restart}"; exit 1 ;;
+esac

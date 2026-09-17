@@ -1,0 +1,64 @@
+/* kome — waybar styling. Palette is imported from theme.css (generated). */
+@import "theme.css";
+
+* {
+    font-family: "JetBrainsMono Nerd Font", monospace;
+    font-size: 13px;
+    min-height: 0;
+}
+
+window#waybar {
+    background: transparent;
+    color: @fg;
+}
+
+.modules-left,
+.modules-center,
+.modules-right {
+    background: @surface;
+    border: 1px solid @outline_dim;
+    border-radius: 12px;
+    padding: 0 8px;
+}
+
+#workspaces button {
+    padding: 0 8px;
+    margin: 4px 2px;
+    border-radius: 8px;
+    color: @fg_dim;
+    background: transparent;
+}
+
+#workspaces button.active {
+    color: @on_primary;
+    background: @primary;
+}
+
+#workspaces button.urgent {
+    color: @fg;
+    background: @error;
+}
+
+#clock,
+#pulseaudio,
+#network,
+#battery,
+#cpu,
+#memory,
+#tray {
+    padding: 0 8px;
+    color: @fg;
+}
+
+#battery.warning {
+    color: @tertiary;
+}
+
+#battery.critical {
+    color: @error;
+}
+
+#tray menu {
+    background: @surface_hi;
+    color: @fg;
+}

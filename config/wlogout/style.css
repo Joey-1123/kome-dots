@@ -1,0 +1,69 @@
+# kome — wlogout config (from 43PR/dotfiles)
+# Uses matugen-generated colors via $variables
+
+layout {
+    direction = horizontal
+    spacing = 20
+    margin = 20
+}
+
+button {
+    width = 150
+    height = 150
+    border-radius = 75
+    background-color = @surface_hi
+    border-width = 2
+    border-color = @outline
+    color = @fg
+    font-family = "JetBrainsMono Nerd Font"
+    font-size = 16
+    margin = 10
+    transition = all 200ms ease
+}
+
+button:hover {
+    background-color = @primary
+    color = @on_primary
+    border-color = @primary
+    transform = scale(1.05)
+}
+
+button:focus {
+    outline = none
+    border-color = @accent
+}
+
+# Power off
+button.poweroff {
+    background-color = @error
+    color = @on_error
+}
+
+button.poweroff:hover {
+    background-color = @error
+    transform = scale(1.05)
+}
+
+# Reboot
+button.reboot {
+    background-color = @tertiary
+    color = @on_tertiary
+}
+
+# Suspend
+button.suspend {
+    background-color = @tertiary
+    color = @on_tertiary
+}
+
+# Logout
+button.logout {
+    background-color = @secondary
+    color = @on_secondary
+}
+
+# Lock
+button.lock {
+    background-color = @primary
+    color = @on_primary
+}

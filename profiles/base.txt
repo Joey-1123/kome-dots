@@ -1,0 +1,50 @@
+# kome base packages — installed for every profile.
+# Component packages (bar, lock, idle, wallpaper, notifications, launcher,
+# OSD, screenshot, clipboard, file manager) are resolved from the provider
+# registry in install/lib/providers.sh, not listed here.
+
+# compositor + portals + auth
+hyprland
+xdg-desktop-portal-hyprland
+xdg-desktop-portal-gtk
+polkit-gnome
+gnome-keyring
+libsecret
+
+# audio
+pipewire
+pipewire-pulse
+pipewire-alsa
+wireplumber
+
+# hardware controls / media
+brightnessctl
+playerctl
+
+# terminal + shell tooling
+kitty
+jq
+gum
+imagemagick
+
+# clipboard transport (history backend comes from the clipboard provider)
+wl-clipboard
+
+# theming engine
+matugen
+
+# fonts
+ttf-jetbrains-mono-nerd
+ttf-nerd-fonts-symbols
+ttf-nerd-fonts-symbols-mono
+noto-fonts
+noto-fonts-emoji
+ttf-liberation
+
+# icons / cursors
+papirus-icon-theme
+adwaita-icon-theme
+
+# desktop basics
+xdg-user-dirs
+xdg-utils

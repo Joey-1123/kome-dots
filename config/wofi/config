@@ -1,0 +1,17 @@
+[options]
+show=drun
+width=640
+height=420
+prompt=
+border=1
+margin=8
+padding=12
+lines=8
+columns=2
+font=JetBrainsMono Nerd Font 11
+icon-theme=Papirus-Dark
+drun-format={icon} {name}
+drun-match-fields=name;description
+drun-search-case-sensitive=false
+drun-use-desktop-file-try-exec=true
+include=~/.config/wofi/style.css

@@ -1,0 +1,2 @@
+# kome minimal profile — base + provider packages only.
+# Intended for a lean session on modest hardware.

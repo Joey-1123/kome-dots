@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+# kome-powermenu — rofi-based power menu (lock, logout, suspend, reboot, shutdown).
+
+set -euo pipefail
+
+KOME_STATE_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/kome"
+PROVIDERS_FILE="${KOME_STATE_DIR}/providers.env"
+
+# shellcheck disable=SC1090
+[[ -f "$PROVIDERS_FILE" ]] && source "$PROVIDERS_FILE"
+
+lock_cmd="${KOME_LOCK:-hyprlock}"
+
+menu=$(cat <<EOF | rofi -dmenu -p "Power" -theme-str 'window {width: 280;} listview {lines: 6;}' -format 's'
+󰍃  Lock
+󰗽  Logout
+󰤄  Suspend
+󰑓  Reboot
+󰐥  Shutdown
+EOF
+)
+
+case "$menu" in
+    "󰍃  Lock") $lock_cmd ;;
+    "󰗽  Logout") hyprctl dispatch exit 0 ;;
+    "󰤄  Suspend") systemctl suspend ;;
+    "󰑓  Reboot") systemctl reboot ;;
+    "󰐥  Shutdown") systemctl poweroff ;;
+esac

@@ -1,0 +1,16 @@
+[flavor]
+dark = "catppuccin-mocha"
+light = "catppuccin-latte"
+
+[manager]
+border_type = "rounded"
+selected_border_type = "rounded"
+
+[preview]
+border_type = "rounded"
+
+[table]
+header_style = "bold"
+header_bg = "blue"
+row_odd_bg = "default"
+row_even_bg = "default"

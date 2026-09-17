@@ -1,0 +1,21 @@
+# kome — local / machine-specific overrides (untracked)
+config/hypr/modules/local.lua
+config/hypr/modules/monitors.local.lua
+config/hypr/theme/colors.lua
+config/kome/providers.env
+config/kome/state.env
+
+# installer / backup artifacts
+*.bak
+*.backup
+.install-backup/
+.install-log/
+
+# build cache
+.cache/
+
+# editor / OS
+*.swp
+*~
+.DS_Store
+ref/

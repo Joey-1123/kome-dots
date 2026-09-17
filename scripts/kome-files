@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+# kome-files — open configured file manager.
+
+set -euo pipefail
+
+KOME_STATE_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/kome"
+PROVIDERS_FILE="${KOME_STATE_DIR}/providers.env"
+
+# shellcheck disable=SC1090
+[[ -f "$PROVIDERS_FILE" ]] && source "$PROVIDERS_FILE"
+
+case "${KOME_FILEMANAGER:-yazi}" in
+    yazi)
+        exec kitty -e yazi "$@"
+        ;;
+    thunar)
+        exec thunar "$@" &
+        ;;
+esac

@@ -1,0 +1,131 @@
+#!/usr/bin/env bash
+# kome-wallpaper — set/pick/random/next wallpaper and regenerate theme.
+
+set -euo pipefail
+
+KOME_STATE_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/kome"
+MODE_FILE="${KOME_STATE_DIR}/mode"
+WALLPAPER_FILE="${KOME_STATE_DIR}/wallpaper"
+
+usage() {
+    cat <<'EOF'
+kome-wallpaper — manage wallpapers and sync theme
+
+Usage:
+  kome-wallpaper set <file>        Set specific wallpaper
+  kome-wallpaper pick              Interactive pick via launcher
+  kome-wallpaper picker            Visual picker (quickshell hyprquickpaper)
+  kome-wallpaper random [light|dark]  Random wallpaper from mode dir
+  kome-wallpaper next [light|dark]    Next wallpaper in mode dir
+  kome-wallpaper current           Show current wallpaper
+  kome-wallpaper restore           Restore saved wallpaper + theme
+EOF
+}
+
+get_mode() {
+    cat "$MODE_FILE" 2>/dev/null || echo dark
+}
+
+get_wallpaper_dir() {
+    local mode="${1:-$(get_mode)}"
+    echo "${HOME}/.local/share/kome/wallpapers/${mode}"
+}
+
+set_wallpaper() {
+    local file="$1" mode
+    mode="$(get_mode)"
+    [[ -f "$file" ]] || { echo "file not found: $file" >&2; exit 1; }
+
+    # set via provider
+    case "${KOME_WALLPAPER:-hyprpaper}" in
+        hyprpaper)
+            hyprctl hyprpaper preload "$file" >/dev/null 2>&1 || true
+            hyprctl hyprpaper wallpaper ",$file" >/dev/null 2>&1 || true
+            ;;
+        awww)
+            awww-cli set "$file" >/dev/null 2>&1 || true
+            ;;
+        quickshell)
+            # quickshell handles its own wallpaper via hyprquickpaper
+            ;;
+    esac
+
+    echo "$file" >"$WALLPAPER_FILE"
+    # regenerate theme for current mode with new wallpaper
+    kome-theme apply "$mode" --wallpaper "$file"
+}
+
+pick_wallpaper() {
+    local mode="${1:-$(get_mode)}" dir file
+    dir="$(get_wallpaper_dir "$mode")"
+    [[ -d "$dir" ]] || { echo "no wallpaper dir: $dir" >&2; exit 1; }
+    mapfile -t files < <(find "$dir" -type f \( -iname '*.jpg' -o -iname '*.png' -o -iname '*.webp' \) | sort)
+    [[ ${#files[@]} -gt 0 ]] || { echo "no wallpapers in $dir" >&2; exit 1; }
+
+    # provider-aware picker
+    case "${KOME_LAUNCHER:-rofi}" in
+        rofi)
+            file=$(printf '%s\n' "${files[@]}" | rofi -dmenu -p "Wallpaper" -theme-str 'listview {lines: 10;}' -format 's')
+            ;;
+        wofi)
+            file=$(printf '%s\n' "${files[@]}" | wofi --dmenu -p "Wallpaper" --cache-file /dev/null)
+            ;;
+        fuzzel)
+            file=$(printf '%s\n' "${files[@]}" | fuzzel --dmenu -p "Wallpaper")
+            ;;
+        *) echo "no launcher"; exit 1 ;;
+    esac
+    [[ -n "$file" ]] && set_wallpaper "$file"
+}
+
+# picker — visual wallpaper selector via quickshell hyprquickpaper
+picker_wallpaper() {
+    if ! command -v qs >/dev/null 2>&1; then
+        echo "quickshell not installed, falling back to pick" >&2
+        pick_wallpaper "$@"
+        return
+    fi
+    # Launch hyprquickpaper - it will call kome-wallpaper set via commands.sh
+    qs -n -c hyprquickpaper
+}
+
+random_wallpaper() {
+    local mode="${1:-$(get_mode)}" dir files file
+    dir="$(get_wallpaper_dir "$mode")"
+    mapfile -t files < <(find "$dir" -type f \( -iname '*.jpg' -o -iname '*.png' -o -iname '*.webp' \) 2>/dev/null)
+    [[ ${#files[@]} -gt 0 ]] || { echo "no wallpapers" >&2; exit 1; }
+    file="${files[RANDOM % ${#files[@]}]}"
+    set_wallpaper "$file"
+}
+
+next_wallpaper() {
+    local mode="${1:-$(get_mode)}" dir files current idx file
+    dir="$(get_wallpaper_dir "$mode")"
+    mapfile -t files < <(find "$dir" -type f \( -iname '*.jpg' -o -iname '*.png' -o -iname '*.webp' \) 2>/dev/null | sort)
+    [[ ${#files[@]} -gt 0 ]] || { echo "no wallpapers" >&2; exit 1; }
+    current="$(cat "$WALLPAPER_FILE" 2>/dev/null || echo "")"
+    idx=0
+    for i in "${!files[@]}"; do
+        [[ "${files[i]}" == "$current" ]] && idx=$(((i + 1) % ${#files[@]})) && break
+    done
+    file="${files[idx]}"
+    set_wallpaper "$file"
+}
+
+restore_wallpaper() {
+    local file
+    file="$(cat "$WALLPAPER_FILE" 2>/dev/null || true)"
+    [[ -f "$file" ]] || { echo "no saved wallpaper" >&2; exit 1; }
+    set_wallpaper "$file"
+}
+
+case "${1:-}" in
+    set) shift; set_wallpaper "$1" ;;
+    pick) pick_wallpaper "${2:-}" ;;
+    picker) picker_wallpaper ;;
+    random) random_wallpaper "${2:-}" ;;
+    next) next_wallpaper "${2:-}" ;;
+    current) cat "$WALLPAPER_FILE" 2>/dev/null || echo "none" ;;
+    restore) restore_wallpaper ;;
+    *) usage; exit 1 ;;
+esac

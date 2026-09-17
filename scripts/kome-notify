@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+# kome-notify — send a test notification via the configured provider.
+
+set -euo pipefail
+
+KOME_STATE_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/kome"
+PROVIDERS_FILE="${KOME_STATE_DIR}/providers.env"
+
+# shellcheck disable=SC1090
+[[ -f "$PROVIDERS_FILE" ]] && source "$PROVIDERS_FILE"
+
+case "${KOME_NOTIFICATIONS:-swaync}" in
+    swaync) notify-send "kome" "Test notification via swaync" ;;
+    mako)   notify-send "kome" "Test notification via mako" ;;
+    dunst)  notify-send "kome" "Test notification via dunst" ;;
+    *) echo "unknown notification provider" >&2; exit 1 ;;
+esac

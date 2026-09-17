@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+# kome-active-player — detect active MPRIS player
+
+set -euo pipefail
+
+# Preferred players in order
+for p in spotify firefox chromium brave mpv vlc; do
+    if playerctl --player="$p" status >/dev/null 2>&1; then
+        echo "$p"
+        exit 0
+    fi
+done
+
+# Fallback: first active player
+playerctl --list-all 2>/dev/null | head -1 || echo ""

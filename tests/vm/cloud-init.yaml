@@ -1,0 +1,30 @@
+#cloud-config
+# kome VM test harness — Arch cloud image seed ISO
+
+users:
+  - name: kome
+    sudo: ALL=(ALL) NOPASSWD:ALL
+    shell: /bin/bash
+    lock_passwd: false
+    passwd: "$6$rounds=4096$kome$dummy"  # password: kome
+    ssh_authorized_keys:
+      - ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAII... kome-test@ci
+
+packages:
+  - git
+  - base-devel
+
+runcmd:
+  - su - kome -c "git clone https://github.com/Joey-1123/kome-dots.git /home/kome/kome"
+  - su - kome -c "cd /home/kome/kome && ./install.sh --yes --profile standard --skip-system"
+  - systemctl enable --now pipewire pipewire-pulse wireplumber
+
+write_files:
+  - path: /etc/ssh/sshd_config.d/kome.conf
+    content: |
+      PermitRootLogin no
+      PasswordAuthentication yes
+      PubkeyAuthentication yes
+
+power_state:
+  mode: reboot

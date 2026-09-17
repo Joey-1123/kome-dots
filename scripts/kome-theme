@@ -1,0 +1,218 @@
+#!/usr/bin/env bash
+# kome-theme — dynamic theme manager using matugen.
+# Usage: kome-theme {set|toggle|apply} [light|dark] [--wallpaper FILE] [--no-reload]
+
+set -euo pipefail
+
+# Auto-detect repo root if not set (for standalone usage)
+KOME_ROOT="${KOME_ROOT:-$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)}"
+
+KOME_STATE_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/kome"
+THEME_DIR="${KOME_STATE_DIR}/theme"
+PROVIDERS_FILE="${KOME_STATE_DIR}/providers.env"
+MODE_FILE="${KOME_STATE_DIR}/mode"
+WALLPAPER_FILE="${KOME_STATE_DIR}/wallpaper"
+
+# shellcheck disable=SC1090
+[[ -f "$PROVIDERS_FILE" ]] && source "$PROVIDERS_FILE"
+
+CURRENT_MODE="$(cat "$MODE_FILE" 2>/dev/null || echo dark)"
+CURRENT_WALLPAPER="$(cat "$WALLPAPER_FILE" 2>/dev/null || true)"
+
+usage() {
+    cat <<'EOF'
+kome-theme — dynamic theme manager using matugen
+
+Usage:
+  kome-theme set light|dark [--wallpaper FILE] [--no-reload]
+  kome-theme toggle [--wallpaper FILE] [--no-reload]
+  kome-theme apply [light|dark] [--wallpaper FILE] [--no-reload]
+  kome-theme current
+  kome-theme schedule [on|off]
+
+Options:
+  --wallpaper FILE   Use specific wallpaper (also updates wallpaper file)
+  --no-reload        Skip hyprctl reload and component reloads
+EOF
+}
+
+notify() {
+    command -v notify-send >/dev/null && notify-send "kome-theme" "$1" 2>/dev/null || true
+}
+
+ensure_dirs() {
+    mkdir -p "$THEME_DIR"
+    mkdir -p "${HOME}/.config/kitty"
+    mkdir -p "${HOME}/.config/waybar"
+    mkdir -p "${HOME}/.config/rofi"
+    mkdir -p "${HOME}/.config/swaync"
+    mkdir -p "${HOME}/.config/wofi"
+    mkdir -p "${HOME}/.config/fuzzel"
+    mkdir -p "${HOME}/.config/mako"
+    mkdir -p "${HOME}/.config/dunst"
+    mkdir -p "${HOME}/.config/gtk-3.0"
+    mkdir -p "${HOME}/.config/gtk-4.0"
+    mkdir -p "${HOME}/.config/hypr"
+}
+
+run_matugen() {
+    local mode="$1" wallpaper="$2"
+    if ! command -v matugen >/dev/null 2>&1; then
+        echo "matugen not installed" >&2
+        return 1
+    fi
+    # matugen 4.x reads config.toml from ~/.config/matugen/
+    # Our config.toml is symlinked there via link_tree
+    matugen image "$wallpaper" --mode "$mode" --config ~/.config/matugen/config.toml
+}
+
+reload_components() {
+    # hyprland
+    hyprctl reload >/dev/null 2>&1 || true
+
+    # waybar
+    if pgrep -x waybar >/dev/null 2>&1; then
+        pkill -SIGUSR2 waybar 2>/dev/null || pkill -HUP waybar 2>/dev/null || true
+    fi
+
+    # swaync
+    if pgrep -x swaync >/dev/null 2>&1; then
+        swaync-client --reload-css 2>/dev/null || swaync-client --reload-config 2>/dev/null || true
+    fi
+
+    # mako
+    if pgrep -x mako >/dev/null 2>&1; then
+        makoctl reload 2>/dev/null || true
+    fi
+
+    # dunst
+    if pgrep -x dunst >/dev/null 2>&1; then
+        dunstctl reload 2>/dev/null || true
+    fi
+
+    # fuzzel - no daemon, nothing to reload
+
+    # rofi - no daemon
+
+    # wofi - no daemon
+}
+
+apply_theme() {
+    local mode="$1"
+    local wallpaper="${2:-$CURRENT_WALLPAPER}"
+    local no_reload="${3:-0}"
+
+    if [[ -z "$wallpaper" || ! -f "$wallpaper" ]]; then
+        # pick first bundled wallpaper for the mode
+        local repo_wallpapers="${KOME_ROOT:-/home/joey/projects/rice}/wallpapers/${mode}"
+        wallpaper="$(find "$repo_wallpapers" -type f \( -iname '*.jpg' -o -iname '*.png' -o -iname '*.webp' -o -iname '*.svg' \) 2>/dev/null | head -1 || true)"
+        [[ -n "$wallpaper" ]] || wallpaper="$(find "${HOME}/Pictures/Wallpapers" -type f \( -iname '*.jpg' -o -iname '*.png' -o -iname '*.webp' -o -iname '*.svg' \) 2>/dev/null | head -1 || true)"
+    fi
+
+    [[ -f "$wallpaper" ]] || { echo "no wallpaper found for $mode" >&2; return 1; }
+
+    echo "$mode" >"$MODE_FILE"
+    echo "$wallpaper" >"$WALLPAPER_FILE"
+
+    ensure_dirs
+    run_matugen "$mode" "$wallpaper"
+
+    if [[ "$no_reload" != "1" ]]; then
+        reload_components
+    fi
+
+    notify "Theme set to $mode"
+}
+
+cmd_set() {
+    local mode="$1"; shift
+    local wallpaper="" no_reload=0
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            --wallpaper) wallpaper="$2"; shift 2 ;;
+            --no-reload) no_reload=1; shift ;;
+            *) shift ;;
+        esac
+    done
+    [[ "$mode" =~ ^(light|dark)$ ]] || { usage; exit 1; }
+    apply_theme "$mode" "$wallpaper" "$no_reload"
+}
+
+cmd_toggle() {
+    local wallpaper="" no_reload=0
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            --wallpaper) wallpaper="$2"; shift 2 ;;
+            --no-reload) no_reload=1; shift ;;
+            *) shift ;;
+        esac
+    done
+    local new_mode="dark"
+    [[ "$CURRENT_MODE" == "dark" ]] && new_mode="light"
+    apply_theme "$new_mode" "$wallpaper" "$no_reload"
+}
+
+cmd_apply() {
+    local mode="${1:-$CURRENT_MODE}"
+    local wallpaper="" no_reload=0
+    shift || true
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            --wallpaper) wallpaper="$2"; shift 2 ;;
+            --no-reload) no_reload=1; shift ;;
+            *) shift ;;
+        esac
+    done
+    apply_theme "$mode" "$wallpaper" "$no_reload"
+}
+
+cmd_current() {
+    echo "$CURRENT_MODE"
+}
+
+cmd_schedule() {
+    local arg="${1:-}"
+    local timer_unit="kome-theme-toggle.timer"
+    local service_unit="kome-theme-toggle.service"
+    local systemd_user_dir="${HOME}/.config/systemd/user"
+    case "$arg" in
+        on)
+            mkdir -p "$systemd_user_dir"
+            cat >"$systemd_user_dir/$service_unit" <<'EOF'
+[Unit]
+Description=Toggle kome theme at sunset/sunrise
+[Service]
+Type=oneshot
+ExecStart=%h/.local/bin/kome-theme toggle
+EOF
+            cat >"$systemd_user_dir/$timer_unit" <<'EOF'
+[Unit]
+Description=Daily theme toggle
+[Timer]
+OnCalendar=*-*-* 06:00,20:00
+Persistent=true
+[Install]
+WantedBy=timers.target
+EOF
+            systemctl --user daemon-reload
+            systemctl --user enable --now "$timer_unit"
+            echo "scheduled: $timer_unit enabled (06:00/20:00)"
+            ;;
+        off)
+            systemctl --user disable --now "$timer_unit" 2>/dev/null || true
+            rm -f "$systemd_user_dir/$service_unit" "$systemd_user_dir/$timer_unit"
+            systemctl --user daemon-reload
+            echo "scheduled: $timer_unit disabled"
+            ;;
+        *) echo "Usage: kome-theme schedule on|off" ;;
+    esac
+}
+
+case "${1:-}" in
+    set) shift; cmd_set "$@" ;;
+    toggle) shift; cmd_toggle "$@" ;;
+    apply) shift; cmd_apply "$@" ;;
+    current) cmd_current ;;
+    schedule) shift; cmd_schedule "$@" ;;
+    *) usage; exit 1 ;;
+esac

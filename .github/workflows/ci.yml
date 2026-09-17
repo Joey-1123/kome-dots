@@ -1,0 +1,43 @@
+name: kome CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install shellcheck
+        run: sudo apt-get update && sudo apt-get install -y shellcheck
+      - name: Run lint
+        run: bash tests/lint.sh
+
+  verify-config:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install hyprland (Arch container)
+        uses: docker://archlinux:latest
+        with:
+          args: |
+            pacman -Sy --noconfirm hyprland lua54
+            bash tests/verify-config.sh
+        # Note: This is a simplified representation. Real CI would use
+        # a proper Arch container or self-hosted runner with hyprland installed.
+
+  shellcheck:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install shellcheck
+        run: sudo apt-get update && sudo apt-get install -y shellcheck
+      - name: Check shell scripts
+        run: |
+          shellcheck -x install.sh
+          shellcheck -x install/main.sh
+          shellcheck -x install/lib/*.sh
+          shellcheck -x scripts/kome-*

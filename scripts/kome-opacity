@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+# kome-opacity — toggle window opacity (from 43PR pattern)
+
+set -euo pipefail
+
+hyprctl activewindow -j | jq -er '.address' >/dev/null || exit 1
+
+CURRENT=$(hyprctl getoption decoration:active_opacity -j | jq -r '.float')
+if (( $(echo "$CURRENT == 1.0" | bc -l) )); then
+    hyprctl keyword decoration:active_opacity 0.9
+    hyprctl keyword decoration:inactive_opacity 0.85
+else
+    hyprctl keyword decoration:active_opacity 1.0
+    hyprctl keyword decoration:inactive_opacity 0.95
+fi

@@ -1,0 +1,54 @@
+# kome — matugen configuration.
+# One --mode (light|dark) governs every template via {{colors.*.default.*}}.
+# kome-theme creates the output directories before invoking matugen.
+
+[config]
+version_check = false
+
+[templates.hyprland]
+input_path = '~/.config/matugen/templates/hyprland-colors.lua'
+output_path = '~/.config/kome/theme/colors.lua'
+
+[templates.kitty]
+input_path = '~/.config/matugen/templates/kitty-colors.conf'
+output_path = '~/.config/kitty/colors.conf'
+
+[templates.waybar]
+input_path = '~/.config/matugen/templates/waybar-theme.css'
+output_path = '~/.config/waybar/theme.css'
+
+[templates.rofi]
+input_path = '~/.config/matugen/templates/rofi-colors.rasi'
+output_path = '~/.config/rofi/colors.rasi'
+
+[templates.swaync]
+input_path = '~/.config/matugen/templates/swaync-style.css'
+output_path = '~/.config/swaync/style.css'
+
+[templates.wofi]
+input_path = '~/.config/matugen/templates/wofi-style.css'
+output_path = '~/.config/wofi/style.css'
+
+[templates.fuzzel]
+input_path = '~/.config/matugen/templates/fuzzel-colors.ini'
+output_path = '~/.config/fuzzel/colors.ini'
+
+[templates.mako]
+input_path = '~/.config/matugen/templates/mako-config'
+output_path = '~/.config/mako/config'
+
+[templates.dunst]
+input_path = '~/.config/matugen/templates/dunst-dunstrc'
+output_path = '~/.config/dunst/dunstrc'
+
+[templates.gtk3]
+input_path = '~/.config/matugen/templates/gtk-3.0-gtk.css'
+output_path = '~/.config/gtk-3.0/gtk.css'
+
+[templates.gtk4]
+input_path = '~/.config/matugen/templates/gtk-4.0-gtk.css'
+output_path = '~/.config/gtk-4.0/gtk.css'
+
+[templates.hyprlock]
+input_path = '~/.config/matugen/templates/hyprlock-colors.conf'
+output_path = '~/.config/hypr/hyprlock-colors.conf'
