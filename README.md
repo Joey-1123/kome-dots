@@ -83,6 +83,7 @@ Then log out and select Hyprland from greetd (or run `Hyprland` from TTY).
 | `SUPER + TAB` | Lock screen |
 | `SUPER + GRAVE` | Power menu |
 | `SUPER + SHIFT + T` | Toggle light/dark theme |
+| `SUPER + SHIFT + G` | Toggle night light |
 | `SUPER + SHIFT + B` | Toggle bar |
 | `PRINT` | Screenshot region |
 | `SHIFT + PRINT` | Screenshot full |

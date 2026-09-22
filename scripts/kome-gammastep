@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+# kome-gammastep — toggle the gammastep night light (from 43PR pattern).
+set -euo pipefail
+
+if ! command -v gammastep >/dev/null 2>&1; then
+    notify-send "gammastep not installed" 2>/dev/null || true
+    echo "error: gammastep not installed" >&2
+    exit 1
+fi
+
+if pgrep -x gammastep >/dev/null 2>&1; then
+    pkill -x gammastep
+    notify-send "Night light off" 2>/dev/null || true
+else
+    nohup gammastep -O 3000 >/dev/null 2>&1 &
+    notify-send "Night light on" 2>/dev/null || true
+fi

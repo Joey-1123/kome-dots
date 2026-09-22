@@ -55,6 +55,18 @@ else
     fail "binds.lua has recorder bind"
 fi
 
+# Night light wired by default (script + bind, no provider flag).
+if [[ -x "$ROOT/scripts/kome-gammastep" ]]; then
+    pass "kome-gammastep installed executable"
+else
+    fail "kome-gammastep installed executable"
+fi
+if grep -q 'kome-gammastep' "$ROOT/config/hypr/modules/binds.lua"; then
+    pass "binds.lua has night-light bind"
+else
+    fail "binds.lua has night-light bind"
+fi
+
 # Ported config dirs present.
 for d in btop cava fastfetch shell starship; do
     if [[ -d "$ROOT/config/$d" ]]; then
