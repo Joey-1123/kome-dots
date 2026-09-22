@@ -11,6 +11,7 @@ if command -v shellcheck >/dev/null 2>&1; then
     shellcheck -x "$ROOT"/install/main.sh
     shellcheck -x "$ROOT"/install/lib/*.sh
     shellcheck -x "$ROOT"/scripts/kome-*
+    shellcheck -x "$ROOT"/tests/*.sh
 else
     echo "shellcheck not installed, skipping"
 fi
@@ -19,8 +20,9 @@ echo ""
 echo "=== bash -n ==="
 bash -n "$ROOT/install.sh"
 bash -n "$ROOT/install/main.sh"
-for f in "$ROOT"/install/lib/*.sh "$ROOT"/install/main.sh; do bash -n "$f"; done
+for f in "$ROOT"/install/lib/*.sh; do bash -n "$f"; done
 for f in "$ROOT"/scripts/kome-*; do bash -n "$f"; done
+for f in "$ROOT"/tests/*.sh; do bash -n "$f"; done
 
 echo ""
 echo "=== lua syntax (luac -p) ==="

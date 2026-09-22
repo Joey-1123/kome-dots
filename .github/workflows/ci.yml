@@ -18,16 +18,20 @@ jobs:
 
   verify-config:
     runs-on: ubuntu-latest
+    container: archlinux:latest
     steps:
       - uses: actions/checkout@v4
-      - name: Install hyprland (Arch container)
-        uses: docker://archlinux:latest
-        with:
-          args: |
-            pacman -Sy --noconfirm hyprland lua54
-            bash tests/verify-config.sh
-        # Note: This is a simplified representation. Real CI would use
-        # a proper Arch container or self-hosted runner with hyprland installed.
+      - name: Install hyprland + lua
+        run: pacman -Sy --noconfirm hyprland lua
+      - name: Verify Hyprland config
+        run: bash tests/verify-config.sh
+
+  install-args:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Installer arg precedence + dry-run
+        run: bash tests/install-args.sh
 
   shellcheck:
     runs-on: ubuntu-latest
@@ -41,3 +45,4 @@ jobs:
           shellcheck -x install/main.sh
           shellcheck -x install/lib/*.sh
           shellcheck -x scripts/kome-*
+          shellcheck -x tests/*.sh
