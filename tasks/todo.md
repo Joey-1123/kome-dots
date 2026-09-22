@@ -1,0 +1,167 @@
+## Task 1: Reconcile 5 quickshell diffs
+
+**Description:** Diff each drifted file and mark keep/port/drop. Most look like theming whitespace; confirm none hides behavior.
+
+**Acceptance criteria:**
+- [x] Verdict recorded for `hyprquickpaper/{cache,commands,shell}.sh + config.json` and `volume-osd/shell.qml`
+- [x] Behavior diffs (if any) named with source line numbers
+
+**Verdicts (2026-09-22):**
+- `cache.sh`: kome added webp filter + header (keep), but cleanup broke the throttle loop (`fi` for `done`, line 36) — fixed in 42122ac.
+- `commands.sh`: kome provider-aware wrapper with awww fallback (keep, improvement over ref).
+- `config.json`: kome paths (`.cache/kome/...`, no trailing slash), batch 4, 6 pictures (keep, intentional).
+- `hyprquickpaper/shell.qml`: whitespace + jpeg/webp filters + trailing-space fix (keep kome).
+- `volume-osd/shell.qml`: whitespace + collapsed handlers, same behavior (keep kome).
+
+**Verification:**
+- [ ] Tests pass: `bash tests/lint.sh`
+- [ ] Manual check: `diff -u` output reviewed for all 5 files
+
+**Dependencies:** None
+
+**Files likely touched:**
+- `tasks/plan.md` (verdicts appendix)
+
+**Estimated scope:** Small: 0 code files, notes only
+
+## Task 2: Waybar scripts parity audit
+
+**Description:** Map each ref waybar script to its kome counterpart and name what's missing: `mpris-marquee.sh` vs `scripts/kome-mpris-marquee`, `playerctl-active.sh` vs `kome-active-player`, `now-playing.sh` vs `kome-now-playing`, orphan `player-control.sh`, host-specific `gpu_usage.sh` + `custom-gpu.txt`, `toggle-gammastep`.
+
+**Acceptance criteria:**
+- [x] Mapping table exists with port/drop per script
+- [x] `player-control.sh` either mapped or declared dead
+
+**Verdicts (2026-09-22):**
+- `mpris-marquee.sh` → `kome-mpris-marquee` was one-shot static, never refreshed (no interval in config). Rewrote as continuous scroll loop, ref logic kept.
+- `playerctl-active.sh` → `kome-active-player` ignored play state (preferred-list order). Rewrote: Playing-first + state file at `$XDG_RUNTIME_DIR/kome-active-player`.
+- `player-control.sh` → dead. Kome inlines play-pause/next/previous in `config.jsonc` on-click. Drop.
+- `gpu_usage.sh` + `custom-gpu.txt` + `temperature` hwmon path → host-specific (Skylake GT2, hwmon5). Drop.
+- `toggle-gammastep` → orphan, nothing references it in kome config. Drop.
+- `kome-now-playing` already covers ref `now-playing.sh` for the lock screen. Keep.
+
+**Verification:**
+- [ ] Tests pass: `bash tests/lint.sh`
+- [ ] Manual check: waybar `config.jsonc` modules all resolve to a shipped exec
+
+**Dependencies:** None
+
+**Files likely touched:**
+- `tasks/plan.md`
+
+**Estimated scope:** Small
+
+## Task 3: Rofi + hypr scripts parity audit
+
+**Description:** Compare ref `rofi/colors.rasi` + `config.rasi` against kome rofi + matugen template, and ref `hypr/scripts/{now-playing,opacity,password-cursor,togglefloat}.sh` against `kome-opacity`, `kome-now-playing`, `kome-password-cursor` (plus binds.lua center logic for togglefloat).
+
+**Acceptance criteria:**
+- [ ] Each ref file has a kome counterpart or a drop reason
+- [ ] `togglefloat.sh` verdict: covered by binds.lua or needs a script
+
+**Verification:**
+- [ ] Tests pass: `bash tests/lint.sh`
+- [ ] Manual check: rofi launches with theme applied, opacity/password scripts behave
+
+**Dependencies:** None
+
+**Files likely touched:**
+- `tasks/plan.md`
+
+**Estimated scope:** Small
+
+## Checkpoint: After Tasks 1-3
+- [ ] All verdicts written, no code changed yet
+- [ ] `bash tests/lint.sh` passes
+- [ ] Review verdicts with human before porting
+
+## Task 4: Port screen-recorder bind on generic output
+
+**Description:** Add `SUPER+R` toggle using `gpu-screen-recorder` on the focused monitor (ref hardcodes `HDMI-A-1`). PID file at `/tmp/kome-gsr.pid`, output `~/Videos/%Y-%m-%d_%H-%M-%S.mp4`, notify when the binary is missing.
+
+**Acceptance criteria:**
+- [ ] `SUPER+R` starts/stops recording without hardcoded output names
+- [ ] Missing binary produces a notification, no error spam
+
+**Verification:**
+- [ ] Tests pass: `bash tests/install-args.sh`
+- [ ] Build succeeds: `hyprland --verify-config -c config/hypr/hyprland.lua`
+- [ ] Manual check: toggle twice, file lands in `~/Videos`
+
+**Dependencies:** Tasks 1-3 (audit checkpoint)
+
+**Files likely touched:**
+- `config/hypr/modules/binds.lua`
+- `scripts/kome-record` (new) or extend `scripts/kome-screenshot`
+
+**Estimated scope:** Small: 1-2 files
+
+## Task 5: Shell dotfiles for zsh/starship/eza
+
+**Description:** Ship zsh extras the installer already promises (autosuggestions, syntax-highlighting, starship prompt, eza aliases) as linkable dotfiles so `--shell zsh` produces the ref terminal feel.
+
+**Acceptance criteria:**
+- [ ] `--shell zsh` links a working `.zshrc` + `starship.toml`
+- [ ] bash/fish paths unchanged
+
+**Verification:**
+- [ ] Tests pass: `bash tests/install-args.sh`
+- [ ] Manual check: dry-run shows the links, `bash -n` clean on new files
+
+**Dependencies:** Task 4
+
+**Files likely touched:**
+- `config/zsh/.zshrc` (new)
+- `config/starship/starship.toml` (new)
+- `install/lib/link.sh`
+
+**Estimated scope:** Medium: 3-5 files
+
+## Checkpoint: After Tasks 4-5
+- [ ] `hyprland --verify-config` passes
+- [ ] Full dry-run per profile passes
+- [ ] Review with human before app configs
+
+## Task 6: Desktop app configs into profiles
+
+**Description:** Place `btop`, `cava` (+shaders/themes), `fastfetch`, GTK `settings.ini`, `xed`, `mpv` configs under `config/` and wire them to the `full` profile (or standard where they already belong).
+
+**Acceptance criteria:**
+- [ ] Each config symlinks on `full` install, nothing extra on `minimal`
+- [ ] No host-specific values (hwmon paths, monitor names)
+
+**Verification:**
+- [ ] Tests pass: `bash tests/lint.sh`
+- [ ] Manual check: dry-run file list per profile reviewed
+
+**Dependencies:** Task 5
+
+**Files likely touched:**
+- `config/btop/`, `config/cava/`, `config/fastfetch/`, `config/gtk-3.0/`, `config/gtk-4.0/`
+- `profiles/full.txt`
+
+**Estimated scope:** Medium: 3-5 files
+
+## Task 7: Docs + regression tests for ported behavior
+
+**Description:** Update README keybind table (recorder, bar toggle key, browser) and add test coverage for ported scripts/binds.
+
+**Acceptance criteria:**
+- [ ] README table matches `binds.lua` exactly
+- [ ] New tests fail without the port, pass with it
+
+**Verification:**
+- [ ] Tests pass: `bash tests/install-args.sh && bash tests/lint.sh`
+- [ ] Manual check: README diff reviewed
+
+**Dependencies:** Task 6
+
+**Files likely touched:**
+- `README.md`
+- `tests/` (new cases)
+
+**Estimated scope:** Small: 1-2 files
+
+## Checkpoint: Complete
+- [ ] All acceptance criteria met
+- [ ] Ready for review

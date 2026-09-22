@@ -1,15 +1,27 @@
 #!/usr/bin/env bash
-# kome-active-player — detect active MPRIS player
-
+# kome-active-player — print the player waybar/lock should control.
+# Prefers a currently-Playing player, else the last-known player from the
+# state file, else nothing (exit 1). Ported from 43PR playerctl-active.sh.
 set -euo pipefail
 
-# Preferred players in order
-for p in spotify firefox chromium brave mpv vlc; do
-    if playerctl --player="$p" status >/dev/null 2>&1; then
-        echo "$p"
+STATE_FILE="${XDG_RUNTIME_DIR:-/tmp}/kome-active-player"
+
+while read -r p; do
+    [[ -z "$p" ]] && continue
+    if [[ "$(playerctl --player="$p" status 2>/dev/null)" == "Playing" ]]; then
+        printf '%s' "$p" >"$STATE_FILE"
+        printf '%s\n' "$p"
         exit 0
     fi
-done
+done < <(playerctl -l 2>/dev/null || true)
 
-# Fallback: first active player
-playerctl --list-all 2>/dev/null | head -1 || echo ""
+if [[ -f "$STATE_FILE" ]]; then
+    p="$(cat "$STATE_FILE")"
+    if [[ -n "$p" ]] && playerctl --player="$p" status >/dev/null 2>&1; then
+        printf '%s\n' "$p"
+        exit 0
+    fi
+    rm -f "$STATE_FILE"
+fi
+
+exit 1
