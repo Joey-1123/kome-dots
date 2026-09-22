@@ -21,6 +21,8 @@ source "${_MAIN_DIR}/lib/system.sh"
 
 SKIP_SYSTEM=0
 DAILY_PROMPT=0
+PROFILE_EXPLICIT=0
+SHELL_EXPLICIT=0
 
 usage() {
     cat <<'EOF'
@@ -46,8 +48,8 @@ EOF
 parse_args() {
     while [[ $# -gt 0 ]]; do
         case "$1" in
-            -p|--profile)        KOME_PROFILE="$2"; shift 2 ;;
-            -s|--shell)          KOME_SHELL_CHOICE="$2"; shift 2 ;;
+            -p|--profile)        KOME_PROFILE="$2"; PROFILE_EXPLICIT=1; shift 2 ;;
+            -s|--shell)          KOME_SHELL_CHOICE="$2"; SHELL_EXPLICIT=1; shift 2 ;;
             --dry-run)           DRY_RUN=1; shift ;;
             -y|--yes)            ASSUME_YES=1; shift ;;
             --no-profile-prompt) DAILY_PROMPT=1; shift ;;
@@ -60,17 +62,21 @@ parse_args() {
         minimal|standard|full) ;;
         *) die "invalid profile: $KOME_PROFILE" ;;
     esac
+    case "$KOME_SHELL_CHOICE" in
+        bash|zsh|fish) ;;
+        *) die "invalid shell: $KOME_SHELL_CHOICE" ;;
+    esac
 }
 
 choose_profile() {
-    if [[ "$DAILY_PROMPT" == "1" || "$ASSUME_YES" == "1" ]]; then return 0; fi
+    if [[ "$PROFILE_EXPLICIT" == "1" || "$DAILY_PROMPT" == "1" || "$ASSUME_YES" == "1" ]]; then return 0; fi
     local choice
     choice="$(ui_choose "Package profile" minimal standard full)"
     KOME_PROFILE="${choice:-standard}"
 }
 
 choose_shell() {
-    if [[ "$ASSUME_YES" == "1" ]]; then return 0; fi
+    if [[ "$SHELL_EXPLICIT" == "1" || "$ASSUME_YES" == "1" ]]; then return 0; fi
     local choice
     choice="$(ui_choose "Login shell to configure" bash zsh fish)"
     KOME_SHELL_CHOICE="${choice:-bash}"
@@ -79,15 +85,30 @@ choose_shell() {
 choose_providers() {
     local component
     for component in "${KOME_COMPONENTS[@]}"; do
+        local var
+        var="KOME_$(printf '%s' "$component" | tr '[:lower:]' '[:upper:]')"
+        # Respect pre-set env (e.g. KOME_BAR=quickshell) — don't clobber.
+        if [[ -n "${!var:-}" ]]; then continue; fi
         local -a options
         read -r -a options <<<"$(providers_for "$component")"
-        local label choice var
+        local label choice
         label="$(kome_component_label "$component")"
         choice="$(ui_choose "Choose $label" "${options[@]}")"
         choice="${choice:-${options[0]}}"
-        var="KOME_$(printf '%s' "$component" | tr '[:lower:]' '[:upper:]')"
         printf -v "$var" '%s' "$choice"
         export "${var?}"
+    done
+}
+
+# init_provider_defaults — fill any unset KOME_<COMPONENT> with the default.
+init_provider_defaults() {
+    local component var
+    for component in "${KOME_COMPONENTS[@]}"; do
+        var="KOME_$(printf '%s' "$component" | tr '[:lower:]' '[:upper:]')"
+        if [[ -z "${!var:-}" ]]; then
+            printf -v "$var" '%s' "$(provider_default "$component")"
+            export "${var?}"
+        fi
     done
 }
 
@@ -116,9 +137,12 @@ main() {
     choose_profile
     choose_shell
     choose_providers
+    init_provider_defaults
     summarize
 
-    if ! ui_confirm "Proceed with installation?" yes; then
+    if [[ "$DRY_RUN" == "1" ]]; then
+        warn "dry-run: skipping confirmation, previewing actions"
+    elif ! ui_confirm "Proceed with installation?" yes; then
         die "aborted by user"
     fi
 

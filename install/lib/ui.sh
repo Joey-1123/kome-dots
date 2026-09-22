@@ -91,6 +91,11 @@ ui_confirm() {
             fi
             ;;
         plain)
+            # Non-interactive stdin (piped/closed) can't answer — honor default.
+            if [[ ! -t 0 ]]; then
+                [[ "$default" == "yes" ]]
+                return
+            fi
             local reply
             read -r -p "$prompt [y/N] " reply
             [[ "$reply" =~ ^[Yy] ]]
