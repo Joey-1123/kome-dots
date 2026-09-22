@@ -54,6 +54,9 @@ hl.bind("Print", hl.dsp.exec_cmd("kome-screenshot region"))
 hl.bind("SHIFT + Print", hl.dsp.exec_cmd("kome-screenshot full"))
 hl.bind(m .. " + Print", hl.dsp.exec_cmd("kome-screenshot window"))
 
+-- Screen recording (toggle, focused monitor) -------------------------------
+hl.bind(m .. " + R", hl.dsp.exec_cmd("kome-record"))
+
 -- Focus (vim-style H/J/K/L) ------------------------------------------------
 hl.bind(m .. " + H", hl.dsp.focus({ direction = "left" }))
 hl.bind(m .. " + J", hl.dsp.focus({ direction = "down" }))

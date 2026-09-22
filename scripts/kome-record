@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+# kome-record — toggle screen recording (gpu-screen-recorder).
+# Records the focused monitor; ref hardcoded HDMI-A-1.
+set -euo pipefail
+
+PIDFILE="/tmp/kome-gsr.pid"
+
+if [[ -f "$PIDFILE" ]] && kill -0 "$(cat "$PIDFILE")" 2>/dev/null; then
+    kill -INT "$(cat "$PIDFILE")"
+    rm -f "$PIDFILE"
+    notify-send "Recording stopped" 2>/dev/null || true
+    exit 0
+fi
+
+if ! command -v gpu-screen-recorder >/dev/null 2>&1; then
+    notify-send "gpu-screen-recorder not installed" 2>/dev/null || true
+    echo "error: gpu-screen-recorder not installed" >&2
+    exit 1
+fi
+
+OUTPUT="$(hyprctl monitors -j 2>/dev/null | jq -r '[.[] | select(.focused == true) | .name][0] // .[0].name' 2>/dev/null || true)"
+[[ -z "$OUTPUT" || "$OUTPUT" == "null" ]] && OUTPUT="eDP-1"
+
+mkdir -p "$HOME/Videos"
+FILE="$HOME/Videos/$(date +%Y-%m-%d_%H-%M-%S).mp4"
+
+gpu-screen-recorder -w "$OUTPUT" -f 60 -a default_output -o "$FILE" &
+echo $! >"$PIDFILE"
+notify-send "Recording $OUTPUT" "$FILE" 2>/dev/null || true

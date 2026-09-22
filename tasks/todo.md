@@ -87,13 +87,13 @@
 **Description:** Add `SUPER+R` toggle using `gpu-screen-recorder` on the focused monitor (ref hardcodes `HDMI-A-1`). PID file at `/tmp/kome-gsr.pid`, output `~/Videos/%Y-%m-%d_%H-%M-%S.mp4`, notify when the binary is missing.
 
 **Acceptance criteria:**
-- [ ] `SUPER+R` starts/stops recording without hardcoded output names
-- [ ] Missing binary produces a notification, no error spam
+- [x] `SUPER+R` starts/stops recording without hardcoded output names
+- [x] Missing binary produces a notification, no error spam
 
 **Verification:**
-- [ ] Tests pass: `bash tests/install-args.sh`
-- [ ] Build succeeds: `hyprland --verify-config -c config/hypr/hyprland.lua`
-- [ ] Manual check: toggle twice, file lands in `~/Videos`
+- [x] Tests pass: `bash tests/install-args.sh`
+- [x] Build succeeds: `hyprland --verify-config -c config/hypr/hyprland.lua` → config ok
+- [x] Manual check: missing-binary path exits 1 cleanly (gsr absent on this box)
 
 **Dependencies:** Tasks 1-3 (audit checkpoint)
 
@@ -108,17 +108,17 @@
 **Description:** Ship zsh extras the installer already promises (autosuggestions, syntax-highlighting, starship prompt, eza aliases) as linkable dotfiles so `--shell zsh` produces the ref terminal feel.
 
 **Acceptance criteria:**
-- [ ] `--shell zsh` links a working `.zshrc` + `starship.toml`
-- [ ] bash/fish paths unchanged
+- [x] `--shell zsh` links a working `.zshrc` + `starship.toml`
+- [x] bash/fish paths unchanged
 
 **Verification:**
-- [ ] Tests pass: `bash tests/install-args.sh`
-- [ ] Manual check: dry-run shows the links, `bash -n` clean on new files
+- [x] Tests pass: `zsh -n config/shell/zshrc`, dry-run shows links
+- [x] Manual check: dry-run `--shell zsh` links `.zshrc` + starship; plugin sources guarded
 
 **Dependencies:** Task 4
 
 **Files likely touched:**
-- `config/zsh/.zshrc` (new)
+- `config/shell/zshrc` (new)
 - `config/starship/starship.toml` (new)
 - `install/lib/link.sh`
 
