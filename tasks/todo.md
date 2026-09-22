@@ -125,7 +125,7 @@
 **Estimated scope:** Medium: 3-5 files
 
 ## Checkpoint: After Tasks 4-5
-- [ ] `hyprland --verify-config` passes
+- [x] `hyprland --verify-config` passes
 - [ ] Full dry-run per profile passes
 - [ ] Review with human before app configs
 
@@ -177,8 +177,8 @@
 ## Phase 4: Audit findings (slop/placeholder/hardcoded)
 
 ### Checkpoint: Audit fixes
-- [ ] `bash tests/lint.sh`, `install-args.sh`, `ported-scripts.sh` all pass
-- [ ] `hyprland --verify-config` passes
+- [x] `bash tests/lint.sh`, `install-args.sh`, `ported-scripts.sh` all pass
+- [x] `hyprland --verify-config` passes
 - [ ] Pushed to origin
 
 ## Task 8: Derive theme wallpaper root from script path
@@ -186,11 +186,11 @@
 **Description:** `scripts/kome-theme` falls back to `/home/joey/projects/rice` when `KOME_ROOT` is unset. Resolve the repo root from the script's own location instead.
 
 **Acceptance criteria:**
-- [ ] No absolute checkout path remains in `scripts/`
-- [ ] Theme apply still finds bundled wallpapers with `KOME_ROOT` unset
+- [x] No absolute checkout path remains in `scripts/`
+- [x] Theme apply still finds bundled wallpapers with `KOME_ROOT` unset
 
 **Verification:**
-- [ ] Tests pass: `bash tests/ported-scripts.sh` (new no-hardcoded-path case)
+- [x] Tests pass: `bash tests/ported-scripts.sh` (new no-hardcoded-path case)
 
 **Dependencies:** None
 
@@ -205,11 +205,11 @@
 **Description:** `scripts/kome-record` guesses `eDP-1` when monitor detection fails. Omit `-w` and let the recorder pick instead of recording the wrong screen.
 
 **Acceptance criteria:**
-- [ ] No monitor-name literals in `scripts/kome-record`
-- [ ] Missing-binary path still exits 1 cleanly
+- [x] No monitor-name literals in `scripts/kome-record`
+- [x] Missing-binary path still exits 1 cleanly
 
 **Verification:**
-- [ ] Tests pass: `bash tests/ported-scripts.sh` (new case + existing recorder case)
+- [x] Tests pass: `bash tests/ported-scripts.sh` (new case + existing recorder case)
 
 **Dependencies:** None
 
@@ -224,9 +224,9 @@
 **Description:** README tree omits 7 config dirs and 7 scripts, keybind table says 1-9 vs code 1-10, wallpapers called "bundled" but are placeholder SVGs, device example named `epic-mouse-v1`.
 
 **Acceptance criteria:**
-- [ ] Tree lists every `config/` dir and shipped `kome-*` script
-- [ ] Table matches `binds.lua` (1-10 workspaces)
-- [ ] Wallpaper line no longer oversells; example device neutral
+- [x] Tree lists every `config/` dir and shipped `kome-*` script
+- [x] Table matches `binds.lua` (1-10 workspaces)
+- [x] Wallpaper line no longer oversells; example device neutral
 
 **Verification:**
 - [ ] Manual check: tree diffed against `ls`, table against `binds.lua`

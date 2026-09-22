@@ -7,23 +7,29 @@ Clean, minimal, with dynamic light/dark theming via matugen.
 ```
 kome/
 ├── config/              # ~/.config symlink source
-│   ├── hypr/            # Hyprland Lua config + modules
+│   ├── hypr/            # Hyprland Lua config + modules (hyprlock, hypridle, hyprpaper)
 │   ├── waybar/          # Status bar (default)
+│   ├── quickshell/      # Wallpaper picker + volume OSD (alternative)
 │   ├── rofi/            # Launcher (default)
-│   ├── kitty/           # Terminal
+│   ├── wofi/            # Alternative launcher
+│   ├── fuzzel/          # Alternative launcher
 │   ├── swaync/          # Notifications (default)
 │   ├── mako/            # Alternative notifications
 │   ├── dunst/           # Alternative notifications
-│   ├── wofi/            # Alternative launcher
-│   ├── fuzzel/          # Alternative launcher
+│   ├── kitty/           # Terminal
 │   ├── yazi/            # File manager (default)
+│   ├── wlogout/         # Logout menu
+│   ├── btop/            # System monitor
+│   ├── cava/            # Audio visualizer
+│   ├── fastfetch/       # System info
+│   ├── shell/           # zshrc (links to ~/.zshrc)
+│   ├── starship/        # Prompt
 │   ├── matugen/         # Theming engine + templates
 │   ├── gtk-3.0/         # GTK3 theming
 │   ├── gtk-4.0/         # GTK4 theming
 │   ├── qt6ct/           # Qt6 theming
 │   ├── kvantum/         # Kvantum theme
-│   ├── greetd/          # Greetd config (opt-in)
-│   └── hypr/            # hyprlock, hypridle, hyprpaper
+│   └── greetd/          # Greetd config (opt-in)
 ├── install.sh           # Entry point
 ├── install/
 │   ├── main.sh          # Orchestration
@@ -36,13 +42,20 @@ kome/
 │   ├── kome-powermenu   # Power menu
 │   ├── kome-bar         # Bar toggle
 │   ├── kome-screenshot  # Screenshots
+│   ├── kome-record      # Screen recording
 │   ├── kome-clipboard   # Clipboard history
+│   ├── kome-opacity     # Window opacity toggle
+│   ├── kome-gammastep   # Night light toggle
+│   ├── kome-mpris-marquee # Waybar media ticker
+│   ├── kome-active-player # Media player detection
+│   ├── kome-now-playing # Lock-screen media info
+│   ├── kome-password-cursor # Lock-screen cursor blink
 │   ├── kome-files       # File manager
 │   ├── kome-osd         # Volume/brightness OSD
 │   ├── kome-doctor      # Diagnostics
 │   ├── kome-notify      # Test notification
 │   └── kome-browser     # Default browser
-├── wallpapers/          # Bundled wallpapers (dark/light)
+├── wallpapers/          # Starter placeholders (dark/light) — drop your own in
 ├── profiles/            # Package profiles (minimal/standard/full)
 └── tests/               # Lint, verify, VM harness
 ```
@@ -92,8 +105,8 @@ Then log out and select Hyprland from greetd (or run `Hyprland` from TTY).
 | `SUPER + O` | Toggle window opacity |
 | `SUPER + B` | Browser |
 | `SUPER + X` | Next keyboard layout |
-| `SUPER + 1-9` | Switch workspace |
-| `SUPER + SHIFT + 1-9` | Move to workspace |
+| `SUPER + 1-0` | Switch workspace |
+| `SUPER + SHIFT + 1-0` | Move to workspace |
 
 ## Theming
 
@@ -135,7 +148,7 @@ Hyprland loads `~/.config/hypr/modules/local.lua` last (if present). Add GPU env
 hl.env("AQ_DRM_DEVICES", "/dev/dri/card0:/dev/dri/card1")  -- multi-GPU
 hl.monitor({ output = "DP-1", position = "0x0", scale = 1 })
 hl.monitor({ output = "HDMI-A-1", position = "1920x0", scale = 1 })
-hl.device({ name = "epic-mouse-v1", sensitivity = -0.3 })
+hl.device({ name = "logitech-g-pro", sensitivity = -0.3 })
 ```
 
 ## Requirements
