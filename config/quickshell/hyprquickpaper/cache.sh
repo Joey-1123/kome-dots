@@ -33,7 +33,7 @@ find "$wallpaper_path" -type f \( \
     if (( cache_batch_size > 0 )); then
         while (( $(jobs -rp | wc -l) >= cache_batch_size )); do
             wait -n
-        fi
+        done
     fi
 
 done
