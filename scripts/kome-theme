@@ -104,7 +104,7 @@ apply_theme() {
 
     if [[ -z "$wallpaper" || ! -f "$wallpaper" ]]; then
         # pick first bundled wallpaper for the mode
-        local repo_wallpapers="${KOME_ROOT:-/home/joey/projects/rice}/wallpapers/${mode}"
+        local repo_wallpapers="${KOME_ROOT}/wallpapers/${mode}"
         wallpaper="$(find "$repo_wallpapers" -type f \( -iname '*.jpg' -o -iname '*.png' -o -iname '*.webp' -o -iname '*.svg' \) 2>/dev/null | head -1 || true)"
         [[ -n "$wallpaper" ]] || wallpaper="$(find "${HOME}/Pictures/Wallpapers" -type f \( -iname '*.jpg' -o -iname '*.png' -o -iname '*.webp' -o -iname '*.svg' \) 2>/dev/null | head -1 || true)"
     fi

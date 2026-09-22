@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # kome-record — toggle screen recording (gpu-screen-recorder).
-# Records the focused monitor; ref hardcoded HDMI-A-1.
+# Records the focused monitor; never a hardcoded output.
 set -euo pipefail
 
 PIDFILE="/tmp/kome-gsr.pid"
@@ -19,11 +19,19 @@ if ! command -v gpu-screen-recorder >/dev/null 2>&1; then
 fi
 
 OUTPUT="$(hyprctl monitors -j 2>/dev/null | jq -r '[.[] | select(.focused == true) | .name][0] // .[0].name' 2>/dev/null || true)"
-[[ -z "$OUTPUT" || "$OUTPUT" == "null" ]] && OUTPUT="eDP-1"
+[[ "$OUTPUT" == "null" ]] && OUTPUT=""
 
 mkdir -p "$HOME/Videos"
 FILE="$HOME/Videos/$(date +%Y-%m-%d_%H-%M-%S).mp4"
 
-gpu-screen-recorder -w "$OUTPUT" -f 60 -a default_output -o "$FILE" &
+# Omit -w when detection failed; the recorder picks its own default
+# instead of us guessing (and recording) the wrong screen.
+if [[ -n "$OUTPUT" ]]; then
+    gpu-screen-recorder -w "$OUTPUT" -f 60 -a default_output -o "$FILE" &
+    notify-send "Recording $OUTPUT" "$FILE" 2>/dev/null || true
+else
+    gpu-screen-recorder -f 60 -a default_output -o "$FILE" &
+    notify-send "Recording" "$FILE" 2>/dev/null || true
+fi
 echo $! >"$PIDFILE"
 notify-send "Recording $OUTPUT" "$FILE" 2>/dev/null || true

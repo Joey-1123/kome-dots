@@ -48,7 +48,21 @@ else
     fail "kome-password-cursor outputs dot or blank (got: $out)"
 fi
 
-# Recorder bind present.
+# No absolute checkout paths in shipped scripts (regression: kome-theme
+# fell back to /home/joey/projects/rice when KOME_ROOT was unset).
+if grep -rn "/home/joey" "$ROOT/scripts/" "$ROOT/install/" 2>/dev/null | grep -v tests | head -n 3 | grep -q .; then
+    fail "no absolute checkout paths in scripts/+install/"
+else
+    pass "no absolute checkout paths in scripts/+install/"
+fi
+
+# Recorder must not guess a monitor name (regression: eDP-1 fallback
+# recorded the wrong screen when detection failed).
+if grep -qE "eDP-1|HDMI-A-1|DP-1" "$ROOT/scripts/kome-record"; then
+    fail "kome-record has no monitor-name literals"
+else
+    pass "kome-record has no monitor-name literals"
+fi
 if grep -q 'kome-record' "$ROOT/config/hypr/modules/binds.lua"; then
     pass "binds.lua has recorder bind"
 else
