@@ -50,7 +50,7 @@ fi
 
 # No absolute checkout paths in shipped scripts (regression: kome-theme
 # fell back to /home/joey/projects/rice when KOME_ROOT was unset).
-if grep -rn "/home/joey" "$ROOT/scripts/" "$ROOT/install/" 2>/dev/null | grep -v tests | head -n 3 | grep -q .; then
+if [[ -n "$(grep -rn "/home/joey" "$ROOT/scripts/" "$ROOT/install/" 2>/dev/null | grep -v tests | head -n 3)" ]]; then
     fail "no absolute checkout paths in scripts/+install/"
 else
     pass "no absolute checkout paths in scripts/+install/"
