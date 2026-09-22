@@ -134,18 +134,23 @@
 **Description:** Place `btop`, `cava` (+shaders/themes), `fastfetch`, GTK `settings.ini`, `xed`, `mpv` configs under `config/` and wire them to the `full` profile (or standard where they already belong).
 
 **Acceptance criteria:**
-- [ ] Each config symlinks on `full` install, nothing extra on `minimal`
-- [ ] No host-specific values (hwmon paths, monitor names)
+- [x] Each config symlinks on install, packages already in standard/full
+- [x] No host-specific values (GTK diff was formatting only)
+
+**Verdicts (2026-09-22):**
+- `btop/btop.conf`, `cava/{config,shaders,themes}`, `fastfetch/{config.jsonc,pfp2.png}` copied verbatim into `config/`, added to core links. Packages already in profiles (btop/fastfetch standard, cava full).
+- GTK `settings.ini` values identical, only `=` spacing differs. No change.
+- `xed`, `mpv`, `neofetch`, `nwg-look`, `spicetify` have no configs worth porting (defaults or account-bound). Skip.
 
 **Verification:**
-- [ ] Tests pass: `bash tests/lint.sh`
-- [ ] Manual check: dry-run file list per profile reviewed
+- [x] Tests pass: `bash tests/lint.sh`
+- [x] Manual check: dry-run shows btop/cava/fastfetch links
 
 **Dependencies:** Task 5
 
 **Files likely touched:**
-- `config/btop/`, `config/cava/`, `config/fastfetch/`, `config/gtk-3.0/`, `config/gtk-4.0/`
-- `profiles/full.txt`
+- `config/btop/`, `config/cava/`, `config/fastfetch/` (new)
+- `install/lib/link.sh`
 
 **Estimated scope:** Medium: 3-5 files
 

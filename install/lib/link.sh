@@ -57,7 +57,7 @@ link_shell() {
 
 # link_selected — link core config, selected provider config, and scripts.
 link_selected() {
-    local core=(hypr kitty matugen starship gtk-3.0 gtk-4.0 qt6ct kvantum)
+    local core=(hypr kitty matugen starship btop cava fastfetch gtk-3.0 gtk-4.0 qt6ct kvantum)
     local name
     for name in "${core[@]}"; do link_tree "$name"; done
 
