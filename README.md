@@ -55,7 +55,7 @@ kome/
 │   ├── kome-doctor      # Diagnostics
 │   ├── kome-notify      # Test notification
 │   └── kome-browser     # Default browser
-├── wallpapers/          # Starter placeholders (dark/light) — drop your own in
+├── wallpapers/          # Starter set from 43PR's collection (see below)
 ├── profiles/            # Package profiles (minimal/standard/full)
 └── tests/               # Lint, verify, VM harness
 ```
@@ -107,6 +107,17 @@ Then log out and select Hyprland from greetd (or run `Hyprland` from TTY).
 | `SUPER + X` | Next keyboard layout |
 | `SUPER + 1-0` | Switch workspace |
 | `SUPER + SHIFT + 1-0` | Move to workspace |
+
+## Wallpapers
+
+Starter set curated from [43PR's wallhaven collection](https://wallhaven.cc/user/43PR) (`kome-wallpaper pick` / `random` reads `wallpapers/dark` + `wallpapers/light`). Images remain property of their original artists — for personal use; full collection at the link above.
+
+| File | Source |
+|------|--------|
+| `dark/43pr-cyberpunk-mono.png` | [wallhaven poy1zj](https://wallhaven.cc/w/poy1zj) |
+| `dark/43pr-songbird.jpg` | [wallhaven 5gj5j8](https://wallhaven.cc/w/5gj5j8) (Dino Art) |
+| `dark/43pr-lucy-moon.jpg` | [wallhaven 3lywyy](https://wallhaven.cc/w/3lywyy) (Dino Art) |
+| `light/43pr-winter-road.jpg` | [wallhaven y8keeg](https://wallhaven.cc/w/y8keeg) |
 
 ## Theming
 
