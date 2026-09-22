@@ -87,6 +87,10 @@ Then log out and select Hyprland from greetd (or run `Hyprland` from TTY).
 | `PRINT` | Screenshot region |
 | `SHIFT + PRINT` | Screenshot full |
 | `SUPER + PRINT` | Screenshot window |
+| `SUPER + R` | Toggle screen recording |
+| `SUPER + O` | Toggle window opacity |
+| `SUPER + B` | Browser |
+| `SUPER + X` | Next keyboard layout |
 | `SUPER + 1-9` | Switch workspace |
 | `SUPER + SHIFT + 1-9` | Move to workspace |
 

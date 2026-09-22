@@ -32,6 +32,8 @@ jobs:
       - uses: actions/checkout@v4
       - name: Installer arg precedence + dry-run
         run: bash tests/install-args.sh
+      - name: Ported script regressions
+        run: bash tests/ported-scripts.sh
 
   shellcheck:
     runs-on: ubuntu-latest

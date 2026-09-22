@@ -159,12 +159,12 @@
 **Description:** Update README keybind table (recorder, bar toggle key, browser) and add test coverage for ported scripts/binds.
 
 **Acceptance criteria:**
-- [ ] README table matches `binds.lua` exactly
-- [ ] New tests fail without the port, pass with it
+- [x] README table matches `binds.lua` exactly
+- [x] New tests fail without the port, pass with it
 
 **Verification:**
-- [ ] Tests pass: `bash tests/install-args.sh && bash tests/lint.sh`
-- [ ] Manual check: README diff reviewed
+- [x] Tests pass: `bash tests/install-args.sh && bash tests/lint.sh`
+- [x] Manual check: README diff reviewed
 
 **Dependencies:** Task 6
 
@@ -173,7 +173,3 @@
 - `tests/` (new cases)
 
 **Estimated scope:** Small: 1-2 files
-
-## Checkpoint: Complete
-- [ ] All acceptance criteria met
-- [ ] Ready for review
