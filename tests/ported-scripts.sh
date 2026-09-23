@@ -201,6 +201,28 @@ else
     fail "binds.lua has game-mode bind"
 fi
 
+# Uninstaller restores a fabricated backup in an isolated HOME.
+iso_home2="$(mktemp -d)"
+mkdir -p "$iso_home2/.config/kitty" "$iso_home2/.config/kome/backups/b1/.config/kitty"
+echo "ORIGINAL" > "$iso_home2/.config/kitty/kitty.conf"
+ln -s "$ROOT/config/kitty/kitty.conf" "$iso_home2/.config/kitty/from-repo.conf"
+printf 'L %s/.config/kitty/from-repo.conf\nM .config/kitty/kitty.conf\n' "$iso_home2" > "$iso_home2/.config/kome/backups/b1/manifest"
+mv "$iso_home2/.config/kitty/kitty.conf" "$iso_home2/.config/kome/backups/b1/.config/kitty/kitty.conf"
+if HOME="$iso_home2" bash "$ROOT/scripts/kome-uninstall" --backup "$iso_home2/.config/kome/backups/b1" >/dev/null 2>&1 \
+    && [[ ! -e "$iso_home2/.config/kitty/from-repo.conf" ]] \
+    && [[ "$(cat "$iso_home2/.config/kitty/kitty.conf")" == "ORIGINAL" ]]; then
+    pass "kome-uninstall restores backup in isolated HOME"
+else
+    fail "kome-uninstall restores backup in isolated HOME"
+fi
+mkdir -p "$iso_home2/.config/kome/backups/empty"
+if HOME="$iso_home2" bash "$ROOT/scripts/kome-uninstall" --backup "$iso_home2/.config/kome/backups/empty" >/dev/null 2>&1; then
+    fail "kome-uninstall refuses without a manifest"
+else
+    pass "kome-uninstall refuses without a manifest"
+fi
+rm -rf "$iso_home2"
+
 if [[ "$FAIL" -eq 0 ]]; then
     echo "=== ported-scripts: all pass ==="
 else

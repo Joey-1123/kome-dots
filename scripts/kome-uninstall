@@ -1,0 +1,71 @@
+#!/usr/bin/env bash
+# kome-uninstall — remove kome symlinks, restore the latest backup.
+# Usage: kome-uninstall [--dry-run] [--backup DIR]
+set -euo pipefail
+
+DRY_RUN=0
+BACKUP=""
+
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --dry-run) DRY_RUN=1; shift ;;
+        --backup) BACKUP="$2"; shift 2 ;;
+        *) echo "Usage: $0 [--dry-run] [--backup DIR]"; exit 1 ;;
+    esac
+done
+
+KOME_STATE_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/kome"
+BACKUP_ROOT="${KOME_STATE_DIR}/backups"
+
+if [[ -z "$BACKUP" ]]; then
+    BACKUP="$(ls -td "$BACKUP_ROOT"/*/ 2>/dev/null | head -n 1 || true)"
+    [[ -n "$BACKUP" ]] || { echo "no kome backup found under $BACKUP_ROOT" >&2; exit 1; }
+fi
+MANIFEST="${BACKUP%/}/manifest"
+[[ -f "$MANIFEST" ]] || { echo "no manifest in $BACKUP; refusing (won't guess)" >&2; exit 1; }
+
+say() { printf '%s\n' "$*"; }
+maybe() {
+    if [[ "$DRY_RUN" == "1" ]]; then
+        say "[dry-run] $*"
+    else
+        "$@"
+    fi
+}
+
+# 1. Remove installer-created symlinks (reverse manifest order).
+mapfile -t linked < <(grep '^L ' "$MANIFEST" | cut -c3- | tac)
+for dest in "${linked[@]}"; do
+    [[ -n "$dest" ]] || continue
+    if [[ -L "$dest" ]]; then
+        maybe rm "$dest"
+        say "removed symlink: $dest"
+    else
+        say "skip (not a symlink): $dest"
+    fi
+done
+
+# 2. Restore backed-up originals.
+mapfile -t moved < <(grep '^M ' "$MANIFEST" | cut -c3-)
+for rel in "${moved[@]}"; do
+    [[ -n "$rel" ]] || continue
+    src="${BACKUP%/}/${rel}"
+    dest="${HOME}/${rel}"
+    if [[ -e "$src" || -L "$src" ]]; then
+        maybe mkdir -p "$(dirname "$dest")"
+        maybe mv "$src" "$dest"
+        say "restored: $dest"
+    else
+        say "skip (backup entry missing): $rel"
+    fi
+done
+
+# 3. Disable kome user timers.
+for unit in kome-updates.timer kome-theme-toggle.timer; do
+    if systemctl --user list-unit-files "$unit" >/dev/null 2>&1; then
+        maybe systemctl --user disable --now "$unit"
+        say "disabled: $unit"
+    fi
+done
+
+say "kome uninstalled (backup kept at $BACKUP)"

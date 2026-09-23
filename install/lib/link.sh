@@ -24,6 +24,7 @@ link_tree() {
         backup_target "$dest"
         run mkdir -p "$(dirname "$dest")"
         run ln -sfn "$src" "$dest"
+        [[ "${DRY_RUN:-0}" == "1" ]] || record_manifest "L ${dest}"
     done < <(find "$src_root" -type f -print0)
     ok "linked ~/.config/$name"
 }
@@ -37,6 +38,7 @@ link_scripts() {
         base="$(basename "$script")"
         backup_target "${KOME_BIN_DIR}/${base}"
         run ln -sfn "$script" "${KOME_BIN_DIR}/${base}"
+        [[ "${DRY_RUN:-0}" == "1" ]] || record_manifest "L ${KOME_BIN_DIR}/${base}"
     done
     ok "linked kome scripts into ~/.local/bin"
 }
@@ -50,6 +52,7 @@ link_shell() {
             [[ -f "$src" ]] || return 0
             backup_target "$dest"
             run ln -sfn "$src" "$dest"
+            [[ "${DRY_RUN:-0}" == "1" ]] || record_manifest "L ${dest}"
             ok "linked ~/.zshrc"
             ;;
     esac
