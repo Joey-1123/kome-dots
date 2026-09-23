@@ -27,8 +27,13 @@ Usage:
   kome-theme set light|dark [--wallpaper FILE] [--no-reload]
   kome-theme toggle [--wallpaper FILE] [--no-reload]
   kome-theme apply [light|dark] [--wallpaper FILE] [--no-reload]
+  kome-theme preset <name> [--no-reload]
+  kome-theme presets
   kome-theme current
   kome-theme schedule [on|off]
+
+Presets (curated static schemes, no wallpaper needed):
+  gruvbox, catppuccin-mocha, tokyo-night
 
 Options:
   --wallpaper FILE   Use specific wallpaper (also updates wallpaper file)
@@ -53,6 +58,53 @@ ensure_dirs() {
     mkdir -p "${HOME}/.config/gtk-3.0"
     mkdir -p "${HOME}/.config/gtk-4.0"
     mkdir -p "${HOME}/.config/hypr"
+}
+
+run_matugen_color() {
+    local mode="$1" hex="$2"
+    if ! command -v matugen >/dev/null 2>&1; then
+        echo "matugen not installed" >&2
+        return 1
+    fi
+    matugen color hex "$hex" --mode "$mode" --config ~/.config/matugen/config.toml
+}
+
+# preset_seed <name> — prints "<hex> <mode>" for a curated preset.
+preset_seed() {
+    case "$1" in
+        gruvbox)          printf '%s' "#d79921 dark" ;;
+        catppuccin-mocha) printf '%s' "#cba6f7 dark" ;;
+        tokyo-night)      printf '%s' "#7aa2f7 dark" ;;
+        *) return 1 ;;
+    esac
+}
+
+cmd_presets() {
+    printf '%s\n' gruvbox catppuccin-mocha tokyo-night
+}
+
+cmd_preset() {
+    local name="${1:-}"; shift || true
+    local no_reload=0
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            --no-reload) no_reload=1; shift ;;
+            *) shift ;;
+        esac
+    done
+    local seed
+    seed="$(preset_seed "$name" 2>/dev/null)" || {
+        echo "unknown preset: $name (available: $(cmd_presets | tr '\n' ' '))" >&2
+        return 1
+    }
+    local hex="${seed%% *}" mode="${seed##* }"
+    echo "$mode" >"$MODE_FILE"
+    ensure_dirs
+    run_matugen_color "$mode" "$hex"
+    if [[ "$no_reload" != "1" ]]; then
+        reload_components
+    fi
+    notify "Theme preset: $name"
 }
 
 run_matugen() {
@@ -212,6 +264,8 @@ case "${1:-}" in
     set) shift; cmd_set "$@" ;;
     toggle) shift; cmd_toggle "$@" ;;
     apply) shift; cmd_apply "$@" ;;
+    preset) shift; cmd_preset "$@" ;;
+    presets) cmd_presets ;;
     current) cmd_current ;;
     schedule) shift; cmd_schedule "$@" ;;
     *) usage; exit 1 ;;

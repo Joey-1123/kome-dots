@@ -90,6 +90,30 @@ for d in btop cava fastfetch shell starship; do
     fi
 done
 
+# Preset command exists in help and lists known presets.
+theme_usage="$(bash "$ROOT/scripts/kome-theme" 2>&1 || true)"
+if [[ "$theme_usage" == *'preset'* ]]; then
+    pass "kome-theme usage mentions preset"
+else
+    fail "kome-theme usage mentions preset"
+fi
+
+# Unknown preset rejected without touching state.
+preset_err="$(bash "$ROOT/scripts/kome-theme" preset nosuchtheme 2>&1 || true)"
+if [[ "$preset_err" == *'unknown'* ]]; then
+    pass "kome-theme preset rejects unknown names"
+else
+    fail "kome-theme preset rejects unknown names"
+fi
+
+# Presets list command names the shipped presets.
+preset_out="$(bash "$ROOT/scripts/kome-theme" presets 2>&1 || true)"
+if [[ "$preset_out" == *'gruvbox'* && "$preset_out" == *'catppuccin-mocha'* && "$preset_out" == *'tokyo-night'* ]]; then
+    pass "kome-theme presets lists shipped presets"
+else
+    fail "kome-theme presets lists shipped presets (got: $preset_out)"
+fi
+
 if [[ "$FAIL" -eq 0 ]]; then
     echo "=== ported-scripts: all pass ==="
 else
