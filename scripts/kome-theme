@@ -193,7 +193,7 @@ apply_theme() {
 }
 
 cmd_set() {
-    local mode="$1"; shift
+    local mode="${1:-}"; shift || true
     local wallpaper="" no_reload=0
     while [[ $# -gt 0 ]]; do
         case "$1" in

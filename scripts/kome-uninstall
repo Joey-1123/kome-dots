@@ -69,17 +69,17 @@ for rel in "${moved[@]}"; do
     if [[ -e "$src" || -L "$src" ]]; then
         maybe mkdir -p "$(dirname "$dest")"
         maybe mv "$src" "$dest"
-        say "restored: $dest"
+        [[ "$DRY_RUN" == "1" ]] || say "restored: $dest"
     else
         say "skip (backup entry missing): $rel"
     fi
 done
 
-# 3. Disable kome user timers.
+# 3. Disable kome user timers (missing units are not an error).
 for unit in kome-updates.timer kome-theme-toggle.timer; do
-    if systemctl --user list-unit-files "$unit" >/dev/null 2>&1; then
-        maybe systemctl --user disable --now "$unit"
-        say "disabled: $unit"
+    if [[ -n "$(systemctl --user list-unit-files "$unit" 2>/dev/null | grep "^$unit" || true)" ]]; then
+        maybe systemctl --user disable --now "$unit" || say "could not disable: $unit"
+        [[ "$DRY_RUN" == "1" ]] || say "disabled: $unit"
     fi
 done
 
