@@ -183,6 +183,24 @@ else
     fail "kome-updates check exits 0"
 fi
 
+# Game mode round-trips live state when a compositor answers.
+if hyprctl version >/dev/null 2>&1; then
+    if bash "$ROOT/scripts/kome-gamemode" on >/dev/null 2>&1 \
+        && bash "$ROOT/scripts/kome-gamemode" off >/dev/null 2>&1 \
+        && hyprctl getoption animations:enabled -j | grep -q '"bool": true'; then
+        pass "kome-gamemode on/off round-trips live state"
+    else
+        fail "kome-gamemode on/off round-trips live state"
+    fi
+else
+    pass "kome-gamemode live round-trip (skipped, no compositor)"
+fi
+if grep -q 'kome-gamemode' "$ROOT/config/hypr/modules/binds.lua"; then
+    pass "binds.lua has game-mode bind"
+else
+    fail "binds.lua has game-mode bind"
+fi
+
 if [[ "$FAIL" -eq 0 ]]; then
     echo "=== ported-scripts: all pass ==="
 else

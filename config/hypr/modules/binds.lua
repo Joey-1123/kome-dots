@@ -95,6 +95,9 @@ hl.bind(m .. " + SHIFT + T", hl.dsp.exec_cmd("kome-theme toggle"))
 -- Night light --------------------------------------------------------------
 hl.bind(m .. " + SHIFT + G", hl.dsp.exec_cmd("kome-gammastep"))
 
+-- Game mode ----------------------------------------------------------------
+hl.bind(m .. " + M", hl.dsp.exec_cmd("kome-gamemode toggle"))
+
 -- Wallpaper picker ---------------------------------------------------------
 hl.bind(m .. " + W", hl.dsp.exec_cmd("kome-wallpaper pick"))
 

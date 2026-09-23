@@ -1,15 +1,13 @@
 #!/usr/bin/env bash
-# kome-opacity — toggle window opacity (from 43PR pattern)
-
+# kome-opacity — toggle window opacity (from 43PR pattern).
+# Uses `hyprctl eval` (Lua configs reject `keyword`).
 set -euo pipefail
 
 hyprctl activewindow -j | jq -er '.address' >/dev/null || exit 1
 
-CURRENT=$(hyprctl getoption decoration:active_opacity -j | jq -r '.float')
-if (( $(echo "$CURRENT == 1.0" | bc -l) )); then
-    hyprctl keyword decoration:active_opacity 0.9
-    hyprctl keyword decoration:inactive_opacity 0.85
+CURRENT=$(hyprctl getoption decoration:active_opacity -j | jq -r '.float // 1.0')
+if awk "BEGIN{exit !( $CURRENT == 1.0 )}"; then
+    hyprctl eval 'hl.config({ decoration = { active_opacity = 0.9, inactive_opacity = 0.85 } })' >/dev/null
 else
-    hyprctl keyword decoration:active_opacity 1.0
-    hyprctl keyword decoration:inactive_opacity 0.95
+    hyprctl eval 'hl.config({ decoration = { active_opacity = 1.0, inactive_opacity = 0.95 } })' >/dev/null
 fi
