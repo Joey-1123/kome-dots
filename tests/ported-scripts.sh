@@ -166,6 +166,23 @@ else
     fail "cheat-sheet covers every bind"
 fi
 
+# Update notifier round-trips timer units in an isolated HOME.
+iso_home="$(mktemp -d)"
+if HOME="$iso_home" bash "$ROOT/scripts/kome-updates" enable >/dev/null 2>&1 \
+    && [[ -f "$iso_home/.config/systemd/user/kome-updates.timer" ]] \
+    && HOME="$iso_home" bash "$ROOT/scripts/kome-updates" disable >/dev/null 2>&1 \
+    && [[ ! -f "$iso_home/.config/systemd/user/kome-updates.timer" ]]; then
+    pass "kome-updates enable/disable round-trips units"
+else
+    fail "kome-updates enable/disable round-trips units"
+fi
+rm -rf "$iso_home"
+if bash "$ROOT/scripts/kome-updates" check >/dev/null 2>&1; then
+    pass "kome-updates check exits 0"
+else
+    fail "kome-updates check exits 0"
+fi
+
 if [[ "$FAIL" -eq 0 ]]; then
     echo "=== ported-scripts: all pass ==="
 else

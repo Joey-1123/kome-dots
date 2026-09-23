@@ -1,0 +1,69 @@
+#!/usr/bin/env bash
+# kome-updates — pending-update notifier with a daily systemd timer.
+# Usage: kome-updates {check|enable|disable}
+set -euo pipefail
+
+SYSTEMD_USER_DIR="${HOME}/.config/systemd/user"
+SERVICE="kome-updates.service"
+TIMER="kome-updates.timer"
+
+count_updates() {
+    local n=0 line
+    if command -v checkupdates >/dev/null 2>&1; then
+        n=$(checkupdates 2>/dev/null | wc -l)
+    fi
+    local helper
+    for helper in yay paru; do
+        if command -v "$helper" >/dev/null 2>&1; then
+            n=$((n + $("$helper" -Qua 2>/dev/null | wc -l)))
+            break
+        fi
+    done
+    printf '%s' "$n"
+}
+
+cmd_check() {
+    local n
+    n="$(count_updates)"
+    if [[ "$n" -gt 0 ]]; then
+        notify-send "Updates available" "$n package(s) pending" 2>/dev/null || true
+        echo "$n update(s) pending"
+    fi
+}
+
+cmd_enable() {
+    mkdir -p "$SYSTEMD_USER_DIR"
+    cat >"$SYSTEMD_USER_DIR/$SERVICE" <<'EOF'
+[Unit]
+Description=Check for kome package updates
+[Service]
+Type=oneshot
+ExecStart=%h/.local/bin/kome-updates check
+EOF
+    cat >"$SYSTEMD_USER_DIR/$TIMER" <<'EOF'
+[Unit]
+Description=Daily update check
+[Timer]
+OnCalendar=daily
+Persistent=true
+[Install]
+WantedBy=timers.target
+EOF
+    systemctl --user daemon-reload 2>/dev/null || true
+    systemctl --user enable --now "$TIMER" 2>/dev/null || true
+    echo "enabled: $TIMER"
+}
+
+cmd_disable() {
+    systemctl --user disable --now "$TIMER" 2>/dev/null || true
+    rm -f "$SYSTEMD_USER_DIR/$SERVICE" "$SYSTEMD_USER_DIR/$TIMER"
+    systemctl --user daemon-reload 2>/dev/null || true
+    echo "disabled: $TIMER"
+}
+
+case "${1:-check}" in
+    check) cmd_check ;;
+    enable) cmd_enable ;;
+    disable) cmd_disable ;;
+    *) echo "Usage: $0 {check|enable|disable}"; exit 1 ;;
+esac
