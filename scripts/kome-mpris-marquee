@@ -1,17 +1,17 @@
 #!/usr/bin/env bash
 # kome-mpris-marquee — scrolling media title for waybar (43PR pattern).
-# Runs continuously; waybar keeps it alive (no interval in config).
+# Event-driven: re-renders on player events, with a 30s fallback so newly
+# appearing players are picked up. Runs continuously; waybar keeps it alive.
 set -euo pipefail
 
 MAX_CHARS=60
 DISPLAY_CHARS=20
-SLEEP=0.5
 
 last_text=""
 last_player=""
 
-while true; do
-    PLAYER=""
+render() {
+    local PLAYER=""
     while read -r p; do
         [[ -z "$p" ]] && continue
         if [[ "$(playerctl --player="$p" status 2>/dev/null)" == "Playing" ]]; then
@@ -21,6 +21,7 @@ while true; do
     done < <(playerctl -l 2>/dev/null || true)
 
     if [[ -n "$PLAYER" ]]; then
+        local title artist text
         title="$(playerctl --player="$PLAYER" metadata --format '{{ title }}' 2>/dev/null || true)"
         artist="$(playerctl --player="$PLAYER" metadata --format '{{ artist }}' 2>/dev/null || true)"
         text="$title - $artist"
@@ -30,19 +31,20 @@ while true; do
         last_text="$text"
         last_player="$PLAYER"
 
-        marquee="$text     "
+        local marquee="$text     "
         while [[ ${#marquee} -lt $DISPLAY_CHARS ]]; do
             marquee+=" "
         done
-        len=${#marquee}
-        pos=$(( $(date +%s%3N) / 150 % len ))
-        output="${marquee:$pos}${marquee:0:$pos}"
+        local len=${#marquee}
+        local pos=$(( $(date +%s%3N) / 150 % len ))
+        local output="${marquee:$pos}${marquee:0:$pos}"
         output="${output:0:$DISPLAY_CHARS}"
 
         jq -cn --arg text "♪  $output" --arg class "playing" --arg tooltip "$text" \
             '{text:$text, class:$class, tooltip:$tooltip}'
     else
         if [[ -n "$last_player" ]]; then
+            local STATUS
             STATUS=$(playerctl --player="$last_player" status 2>/dev/null || true)
             if [[ "$STATUS" == "Paused" ]]; then
                 jq -cn --arg text "♪  $last_text" --arg class "paused" --arg tooltip "$last_text" \
@@ -55,6 +57,11 @@ while true; do
             jq -cn '{text:"", class:"empty", tooltip:""}'
         fi
     fi
+}
 
-    sleep "$SLEEP"
+while true; do
+    render
+    # Block until a player event arrives; fall back to periodic re-check
+    # so players that appear silently are still picked up.
+    timeout 30 playerctl --follow metadata --format '{{playerName}}' >/dev/null 2>&1 || true
 done
