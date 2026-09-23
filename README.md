@@ -43,6 +43,10 @@ kome/
 │   ├── kome-bar         # Bar toggle
 │   ├── kome-screenshot  # Screenshots
 │   ├── kome-record      # Screen recording
+│   ├── kome-keybinds    # Keybind cheat-sheet
+│   ├── kome-updates     # Update notifier + timer
+│   ├── kome-gamemode    # Compositor effects toggle
+│   ├── kome-uninstall   # Clean removal + backup restore
 │   ├── kome-clipboard   # Clipboard history
 │   ├── kome-opacity     # Window opacity toggle
 │   ├── kome-gammastep   # Night light toggle
@@ -130,6 +134,8 @@ kome-theme set light         # set light mode
 kome-theme toggle            # toggle
 kome-theme apply             # re-apply current mode
 kome-theme schedule on       # auto-toggle at 06:00/20:00
+kome-theme preset gruvbox    # curated static scheme (no wallpaper needed)
+kome-theme presets           # list: gruvbox, catppuccin-mocha, tokyo-night
 kome-wallpaper pick          # interactive picker
 kome-wallpaper random        # random from mode dir
 ```
@@ -171,6 +177,15 @@ hl.device({ name = "logitech-g-pro", sensitivity = -0.3 })
 - Hyprland ≥ 0.56 (Lua config)
 - `gum` or `whiptail` for installer TUI
 - `yay` or `paru` for AUR packages
+
+## Uninstall
+
+```bash
+kome-uninstall --dry-run   # preview removals
+kome-uninstall             # remove symlinks, restore latest backup
+```
+
+Removes installer-created symlinks, restores backed-up originals, and disables kome timers. Refuses backup dirs without a manifest rather than guessing. Backups are kept.
 
 ## Testing
 
