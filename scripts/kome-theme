@@ -112,10 +112,10 @@ cmd_preset() {
         return 1
     }
     local hex="${seed%% *}" mode="${seed##* }"
-    echo "$mode" >"$MODE_FILE"
     ensure_dirs
     migrate_generated
-    run_matugen_color "$mode" "$hex"
+    run_matugen_color "$mode" "$hex" || return 1
+    echo "$mode" >"$MODE_FILE"
     if [[ "$no_reload" != "1" ]]; then
         reload_components
     fi
@@ -178,12 +178,12 @@ apply_theme() {
 
     [[ -f "$wallpaper" ]] || { echo "no wallpaper found for $mode" >&2; return 1; }
 
-    echo "$mode" >"$MODE_FILE"
-    echo "$wallpaper" >"$WALLPAPER_FILE"
-
     ensure_dirs
     migrate_generated
-    run_matugen "$mode" "$wallpaper"
+    run_matugen "$mode" "$wallpaper" || return 1
+
+    echo "$mode" >"$MODE_FILE"
+    echo "$wallpaper" >"$WALLPAPER_FILE"
 
     if [[ "$no_reload" != "1" ]]; then
         reload_components

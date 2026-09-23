@@ -215,11 +215,26 @@ if HOME="$iso_home2" bash "$ROOT/scripts/kome-uninstall" --backup "$iso_home2/.c
 else
     fail "kome-uninstall restores backup in isolated HOME"
 fi
+if HOME="$iso_home2" bash "$ROOT/scripts/kome-uninstall" --backup >/dev/null 2>&1; then
+    fail "kome-uninstall rejects --backup without a value"
+else
+    pass "kome-uninstall rejects --backup without a value"
+fi
 mkdir -p "$iso_home2/.config/kome/backups/empty"
 if HOME="$iso_home2" bash "$ROOT/scripts/kome-uninstall" --backup "$iso_home2/.config/kome/backups/empty" >/dev/null 2>&1; then
     fail "kome-uninstall refuses without a manifest"
 else
     pass "kome-uninstall refuses without a manifest"
+fi
+# User-replaced symlink is left alone; traversal entries refused.
+mkdir -p "$iso_home2/.config/kome/backups/b2"
+ln -s /etc/hostname "$iso_home2/.config/kitty/foreign.conf"
+printf 'L %s/.config/kitty/foreign.conf\nM ../escape\n' "$iso_home2" > "$iso_home2/.config/kome/backups/b2/manifest"
+out_u="$(HOME="$iso_home2" bash "$ROOT/scripts/kome-uninstall" --backup "$iso_home2/.config/kome/backups/b2" 2>&1)"
+if [[ -L "$iso_home2/.config/kitty/foreign.conf" ]] && [[ "$out_u" == *'no longer kome-managed'* && "$out_u" == *'refusing unsafe entry'* ]]; then
+    pass "kome-uninstall skips foreign symlinks and unsafe entries"
+else
+    fail "kome-uninstall skips foreign symlinks and unsafe entries"
 fi
 rm -rf "$iso_home2"
 
