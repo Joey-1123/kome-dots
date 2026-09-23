@@ -47,6 +47,7 @@ notify() {
 
 ensure_dirs() {
     mkdir -p "$THEME_DIR"
+    mkdir -p "${HOME}/.config/cava"
     mkdir -p "${HOME}/.config/kitty"
     mkdir -p "${HOME}/.config/waybar"
     mkdir -p "${HOME}/.config/rofi"
@@ -58,6 +59,19 @@ ensure_dirs() {
     mkdir -p "${HOME}/.config/gtk-3.0"
     mkdir -p "${HOME}/.config/gtk-4.0"
     mkdir -p "${HOME}/.config/hypr"
+}
+
+# migrate_generated — drop stale symlinks where matugen now writes.
+# (cava config moved from symlinked static file to generated output.)
+migrate_generated() {
+    local dest link
+    dest="${HOME}/.config/cava/config"
+    if [[ -L "$dest" ]]; then
+        link="$(readlink "$dest")"
+        case "$link" in
+            *kome*/config/cava/*|*rice*/config/cava/*) rm -f "$dest" ;;
+        esac
+    fi
 }
 
 run_matugen_color() {
@@ -100,6 +114,7 @@ cmd_preset() {
     local hex="${seed%% *}" mode="${seed##* }"
     echo "$mode" >"$MODE_FILE"
     ensure_dirs
+    migrate_generated
     run_matugen_color "$mode" "$hex"
     if [[ "$no_reload" != "1" ]]; then
         reload_components
@@ -167,6 +182,7 @@ apply_theme() {
     echo "$wallpaper" >"$WALLPAPER_FILE"
 
     ensure_dirs
+    migrate_generated
     run_matugen "$mode" "$wallpaper"
 
     if [[ "$no_reload" != "1" ]]; then

@@ -114,6 +114,23 @@ else
     fail "kome-theme presets lists shipped presets (got: $preset_out)"
 fi
 
+# Cava colors come from matugen (no static gradient hexes in repo).
+if grep -q "templates.cava" "$ROOT/config/matugen/config.toml" && [[ -f "$ROOT/config/matugen/templates/cava-config" ]]; then
+    pass "cava template registered in matugen config"
+else
+    fail "cava template registered in matugen config"
+fi
+if grep -vE "^[[:space:]]*[;#]" "$ROOT/config/matugen/templates/cava-config" | grep -qE "gradient_color_[0-9] = '#[0-9a-fA-F]{6}'"; then
+    fail "cava template has no hardcoded gradient hexes"
+else
+    pass "cava template has no hardcoded gradient hexes"
+fi
+if [[ -f "$ROOT/config/cava/config" ]]; then
+    fail "no static cava config shadows generated output"
+else
+    pass "no static cava config shadows generated output"
+fi
+
 if [[ "$FAIL" -eq 0 ]]; then
     echo "=== ported-scripts: all pass ==="
 else
