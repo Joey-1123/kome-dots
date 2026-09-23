@@ -131,6 +131,41 @@ else
     pass "no static cava config shadows generated output"
 fi
 
+# Cheat-sheet covers every bind in binds.lua. Grouped H/J/K/L rows are
+# expanded before matching; everything else must appear literally.
+cheat_missing=0
+cheat_list="$(bash "$ROOT/scripts/kome-keybinds" --list)"
+cheat_expanded="$(printf '%s' "$cheat_list" | while IFS= read -r line; do
+    if [[ "$line" == *'H/J/K/L'* ]]; then
+        for letter in H J K L; do
+            printf '%s\n' "${line//H\/J\/K\/L/$letter}"
+        done
+    else
+        printf '%s\n' "$line"
+    fi
+done)"
+while IFS= read -r key; do
+    [[ -z "$key" ]] && continue
+    if [[ "$key" =~ ^SUPER\ \+\ [0-9]$ ]] || [[ "$key" =~ ^SUPER\ \+\ SHIFT\ \+\ [0-9]$ ]]; then
+        pattern="1-0"
+    elif [[ "$key" == XF86* ]]; then
+        pattern="XF86"
+    elif [[ "$key" == *"mouse"* || "$key" == *"code:"* ]]; then
+        pattern="mouse"
+    else
+        pattern="$key"
+    fi
+    if [[ "$cheat_expanded" != *"$pattern"* ]]; then
+        printf 'missing from cheat-sheet: %s\n' "$key"
+        cheat_missing=1
+    fi
+done < <(lua "$ROOT/tests/extract-binds.lua" "$ROOT/config/hypr/modules/binds.lua")
+if [[ "$cheat_missing" -eq 0 ]]; then
+    pass "cheat-sheet covers every bind"
+else
+    fail "cheat-sheet covers every bind"
+fi
+
 if [[ "$FAIL" -eq 0 ]]; then
     echo "=== ported-scripts: all pass ==="
 else

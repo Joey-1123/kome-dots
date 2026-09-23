@@ -1,0 +1,64 @@
+#!/usr/bin/env bash
+# kome-keybinds — keybind cheat-sheet in the launcher.
+# Usage: kome-keybinds [--list]   (--list prints KEY | description lines)
+set -euo pipefail
+
+list_binds() {
+    cat <<'EOF'
+SUPER + T | Terminal
+SUPER + D | App launcher
+SUPER + E | File manager
+SUPER + B | Browser
+SUPER + Q | Close window
+SUPER + F | Fullscreen
+SUPER + SHIFT + F | Maximize
+SUPER + SPACE | Toggle float + center
+SUPER + P | Toggle pseudo-tiling
+SUPER + J | Toggle split
+SUPER + C | Center window
+SUPER + O | Toggle opacity
+SUPER + GRAVE | Power menu
+SUPER + TAB | Lock screen
+SUPER + V | Clipboard history
+Print | Screenshot region
+SHIFT + Print | Screenshot full
+SUPER + Print | Screenshot window
+SUPER + R | Toggle screen recording
+SUPER + H/J/K/L | Focus left/down/up/right
+SUPER + SHIFT + H/J/K/L | Move window left/down/up/right
+SUPER + CTRL + H/J/K/L | Resize window
+SUPER + 1-0 | Switch workspace
+SUPER + SHIFT + 1-0 | Move to workspace
+SUPER + mouse:272 | Drag window
+SUPER + mouse:273 | Resize window
+SUPER + SHIFT + B | Toggle bar
+SUPER + SHIFT + T | Toggle theme
+SUPER + SHIFT + G | Toggle night light
+SUPER + W | Wallpaper picker
+XF86MonBrightnessUp/Down | Brightness
+SUPER + X | Next keyboard layout
+SUPER + mouse_down/up | Zoom out/in
+SUPER + slash | This cheat-sheet
+SUPER + SHIFT + E | Exit Hyprland
+XF86AudioRaiseVolume/LowerVolume/Mute | Volume
+XF86AudioMicMute | Mic mute
+XF86AudioNext/Prev/Play/Pause | Media control
+EOF
+    local i
+    for i in 1 2 3 4 5 6 7 8 9 0; do
+        printf 'SUPER + %s | Switch workspace %s\n' "$i" "$i"
+        printf 'SUPER + SHIFT + %s | Move to workspace %s\n' "$i" "$i"
+    done
+}
+
+if [[ "${1:-}" == "--list" ]]; then
+    list_binds
+    exit 0
+fi
+
+choice="$(list_binds | case "${KOME_LAUNCHER:-rofi}" in
+    wofi) wofi --dmenu -p "Keybinds" --cache-file /dev/null ;;
+    fuzzel) fuzzel --dmenu -p "Keybinds" ;;
+    *) rofi -dmenu -p "Keybinds" -format 's' ;;
+esac)" || exit 0
+[[ -n "$choice" ]] && notify-send "kome" "$choice" 2>/dev/null || true

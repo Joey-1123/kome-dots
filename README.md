@@ -105,6 +105,8 @@ Then log out and select Hyprland from greetd (or run `Hyprland` from TTY).
 | `SUPER + O` | Toggle window opacity |
 | `SUPER + B` | Browser |
 | `SUPER + X` | Next keyboard layout |
+| `SUPER + slash` | Keybind cheat-sheet |
+| `SUPER + SHIFT + E` | Exit Hyprland |
 | `SUPER + 1-0` | Switch workspace |
 | `SUPER + SHIFT + 1-0` | Move to workspace |
 

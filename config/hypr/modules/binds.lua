@@ -121,6 +121,9 @@ hl.bind(m .. " + mouse_up",   function() zoomfunction(0.5) end,  { repeating = t
 hl.bind(m .. " + code:82",    function() zoomfunction(-0.3) end, { repeating = true })
 hl.bind(m .. " + code:86",    function() zoomfunction(0.3) end,  { repeating = true })
 
+-- Cheat-sheet ---------------------------------------------------------------
+hl.bind(m .. " + slash", hl.dsp.exec_cmd("kome-keybinds"))
+
 -- Exit (use hyprshutdown if available) -------------------------------------
 hl.bind(m .. " + SHIFT + E", hl.dsp.exec_cmd("command -v hyprshutdown >/dev/null 2>&1 && hyprshutdown || hyprctl dispatch exit"))
 
