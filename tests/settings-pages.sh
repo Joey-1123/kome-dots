@@ -33,6 +33,7 @@ component_contract StatePill.qml "shared semantic state pill"
 component_contract EmptyState.qml "shared loading/empty/error state"
 component_contract SettingsSearch.qml "shared keyboard search field"
 component_contract NetworkHero.qml "shared active network summary"
+component_contract ConfirmDialog.qml "shared confirmation overlay"
 
 if [[ -f "$ROOT/config/quickshell/SettingsPage.qml" ]]; then
     if grep -Fq 'bottomPadding: 18' "$ROOT/config/quickshell/SettingsPage.qml"; then
@@ -269,6 +270,43 @@ if grep -Eq 'contentRightMargin|property string monoFont' "$network_page" \
     fail "Network page uses shared tokens without legacy margins"
 else
     pass "Network page uses shared tokens without legacy margins"
+fi
+
+bluetooth_page="$ROOT/config/quickshell/SettingsPages/BluetoothPage.qml"
+bluetooth_service="$ROOT/config/quickshell/BluetoothService.qml"
+if grep -Fq 'SettingsPage {' "$bluetooth_page" \
+    && grep -Fq 'BluetoothService {' "$bluetooth_page" \
+    && [[ "$(wc -l < "$bluetooth_page")" -le 260 ]]; then
+    pass "Bluetooth page separates adapter control from its UI"
+else
+    fail "Bluetooth page separates adapter control from its UI"
+fi
+if grep -Fq 'SettingsSearch {' "$bluetooth_page" \
+    && grep -Fq 'adapter.devices.values.filter' "$bluetooth_service" \
+    && grep -Fq 'pairedDevices' "$bluetooth_service" \
+    && grep -Fq 'availableDevices' "$bluetooth_service"; then
+    pass "Bluetooth page separates paired and available devices"
+else
+    fail "Bluetooth page separates paired and available devices"
+fi
+if grep -Fq 'ConfirmDialog {' "$bluetooth_page" \
+    && grep -Fq $'z: 1000\n    anchors.fill: parent' "$ROOT/config/quickshell/ConfirmDialog.qml" \
+    && grep -Fq 'function forget(device)' "$bluetooth_service"; then
+    pass "Bluetooth forget requires shared confirmation"
+else
+    fail "Bluetooth forget requires shared confirmation"
+fi
+if grep -Fq 'onDevicesChanged' "$bluetooth_page" \
+    || grep -Fq 'removed-bluetooth-devices.json' "$bluetooth_page" \
+    || grep -Fq 'FileView {' "$bluetooth_page"; then
+    fail "Bluetooth page removes invalid handlers and missing-state warnings"
+else
+    pass "Bluetooth page removes invalid handlers and missing-state warnings"
+fi
+if grep -Eq '#[0-9a-fA-F]{6,8}|contentRightMargin' "$bluetooth_page"; then
+    fail "Bluetooth page uses shared semantic tokens"
+else
+    pass "Bluetooth page uses shared semantic tokens"
 fi
 
 if [[ "$FAIL" -eq 0 ]]; then
