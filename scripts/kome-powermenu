@@ -7,7 +7,7 @@ KOME_STATE_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/kome"
 PROVIDERS_FILE="${KOME_STATE_DIR}/providers.env"
 
 # shellcheck disable=SC1090
-[[ -f "$PROVIDERS_FILE" ]] && source "$PROVIDERS_FILE"
+if [[ -f "$PROVIDERS_FILE" ]]; then source "$PROVIDERS_FILE"; fi
 
 lock_cmd="${KOME_LOCK:-hyprlock}"
 

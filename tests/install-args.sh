@@ -54,6 +54,15 @@ else
     fail "ui_confirm plain defaults to yes on closed stdin (got: $out5)"
 fi
 
+# Test 6: no bare '[[ ... ]] && ...' as a function tail in main.sh (set -e kill).
+# Regression: summarize() ended with '[[ "$DRY_RUN" == "1" ]] && warn ...'
+# which returns 1 on real installs, aborting the installer right after Plan.
+if grep -Eq '^[[:space:]]+\[\[ .* \]\] && ' "$MAIN"; then
+    fail "bare '[[ ... ]] && ...' statement in install/main.sh (set -e abort risk)"
+else
+    pass "no bare '[[ ... ]] && ...' in install/main.sh"
+fi
+
 if [[ "$FAIL" -eq 0 ]]; then
     echo "=== install-args: all pass ==="
 else

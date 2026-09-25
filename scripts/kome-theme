@@ -14,7 +14,7 @@ MODE_FILE="${KOME_STATE_DIR}/mode"
 WALLPAPER_FILE="${KOME_STATE_DIR}/wallpaper"
 
 # shellcheck disable=SC1090
-[[ -f "$PROVIDERS_FILE" ]] && source "$PROVIDERS_FILE"
+if [[ -f "$PROVIDERS_FILE" ]]; then source "$PROVIDERS_FILE"; fi
 
 CURRENT_MODE="$(cat "$MODE_FILE" 2>/dev/null || echo dark)"
 CURRENT_WALLPAPER="$(cat "$WALLPAPER_FILE" 2>/dev/null || true)"
@@ -63,6 +63,9 @@ ensure_dirs() {
 
 # migrate_generated — drop stale symlinks where matugen now writes.
 # (cava config moved from symlinked static file to generated output.)
+# Also drop dangling symlinks at any matugen output path: a symlink whose
+# target is gone (e.g. a GTK theme that is no longer installed) makes
+# matugen fail with "No such file or directory" and abort the whole run.
 migrate_generated() {
     local dest link
     dest="${HOME}/.config/cava/config"
@@ -72,6 +75,26 @@ migrate_generated() {
             *kome*/config/cava/*|*rice*/config/cava/*) rm -f "$dest" ;;
         esac
     fi
+    local out
+    for out in \
+        "${HOME}/.config/kome/theme/colors.lua" \
+        "${HOME}/.config/kitty/colors.conf" \
+        "${HOME}/.config/waybar/theme.css" \
+        "${HOME}/.config/rofi/colors.rasi" \
+        "${HOME}/.config/swaync/style.css" \
+        "${HOME}/.config/wofi/style.css" \
+        "${HOME}/.config/fuzzel/colors.ini" \
+        "${HOME}/.config/mako/config" \
+        "${HOME}/.config/dunst/dunstrc" \
+        "${HOME}/.config/gtk-3.0/gtk.css" \
+        "${HOME}/.config/gtk-4.0/gtk.css" \
+        "${HOME}/.config/hypr/hyprlock-colors.conf" \
+        "${HOME}/.config/cava/config" \
+    ; do
+        if [[ -L "$out" && ! -e "$out" ]]; then
+            rm -f "$out"
+        fi
+    done
 }
 
 run_matugen_color() {
@@ -130,7 +153,11 @@ run_matugen() {
     fi
     # matugen 4.x reads config.toml from ~/.config/matugen/
     # Our config.toml is symlinked there via link_tree
-    matugen image "$wallpaper" --mode "$mode" --config ~/.config/matugen/config.toml
+    # --prefer keeps non-interactive runs from prompting when an image
+    # yields multiple candidate source colors.
+    local prefer="darkness"
+    [[ "$mode" == "light" ]] && prefer="lightness"
+    matugen image "$wallpaper" --mode "$mode" --prefer "$prefer" --config ~/.config/matugen/config.toml
 }
 
 reload_components() {

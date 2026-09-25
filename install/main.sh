@@ -121,7 +121,7 @@ summarize() {
         var="KOME_$(printf '%s' "$component" | tr '[:lower:]' '[:upper:]')"
         log "$(printf '%-14s' "$(kome_component_label "$component")"): ${!var}"
     done
-    [[ "$DRY_RUN" == "1" ]] && warn "dry-run: no changes will be made"
+    if [[ "$DRY_RUN" == "1" ]]; then warn "dry-run: no changes will be made"; fi
 }
 
 main() {

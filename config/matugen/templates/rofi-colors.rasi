@@ -13,4 +13,8 @@
     error:         {{colors.error.default.hex}};
     outline:       {{colors.outline.default.hex}};
     outline-dim:   {{colors.outline_variant.default.hex}};
+    /* Dash aliases required by config.rasi (rasi names cannot use _) */
+    primary-container:   {{colors.primary_container.default.hex}};
+    on-surface:          {{colors.on_surface.default.hex}};
+    on-surface-variant:  {{colors.on_surface_variant.default.hex}};
 }

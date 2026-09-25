@@ -10,7 +10,6 @@ configuration {
     display-drun: "";
     display-run: "";
     display-window: "";
-    theme: ~/.config/rofi/colors.rasi;
     show-icons: true;
     icon-theme: "Papirus-Dark";
     location: 0;
@@ -30,15 +29,13 @@ configuration {
 }
 
 * {
-    bg: @bg;
-    bg-alt: @surface_hi;
-    bg-hover: @primary_container;
+    bg-alt: @surface-hi;
+    bg-hover: @primary-container;
     bg-selected: @primary;
-    fg: @fg;
-    fg-muted: @on_surface_variant;
-    fg-dark: @on_surface;
+    fg-muted: @on-surface-variant;
+    fg-dark: @on-surface;
     accent: @primary;
-    accent-soft: @primary_container;
+    accent-soft: @primary-container;
     urgent: @error;
     border-color: @outline;
 

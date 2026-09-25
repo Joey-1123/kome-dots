@@ -8,15 +8,26 @@ KOME_STATE_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/kome"
 PROVIDERS_FILE="${KOME_STATE_DIR}/providers.env"
 
 # shellcheck disable=SC1090
-[[ -f "$PROVIDERS_FILE" ]] && source "$PROVIDERS_FILE"
+if [[ -f "$PROVIDERS_FILE" ]]; then source "$PROVIDERS_FILE"; fi
 
 start_component() {
     local name="$1" cmd="$2"
-    if pgrep -x "$name" >/dev/null 2>&1; then
+    if running "$name"; then
         return 0
     fi
     # shellcheck disable=SC2086
     setsid bash -c "$cmd" >/dev/null 2>&1 &
+}
+
+# running <name> — pgrep by process name, falling back to full cmdline for
+# names longer than the 15-char pgrep limit.
+running() {
+    local name="$1"
+    if ((${#name} > 15)); then
+        pgrep -f -- "$name" >/dev/null 2>&1
+    else
+        pgrep -x "$name" >/dev/null 2>&1
+    fi
 }
 
 stop_component() {
@@ -25,9 +36,20 @@ stop_component() {
 }
 
 start_all() {
-    # polkit agent
-    start_component "polkit-kde-authentication-agent-1" \
-        "/usr/lib/polkit-kde-authentication-agent-1"
+    # polkit auth agent — start whichever is actually installed. Paths differ
+    # across packages/distros, so probe rather than assume.
+    local agent=""
+    for candidate in \
+        /usr/lib/polkit-gnome/polkit-gnome-authentication-agent-1 \
+        /usr/lib/polkit-gnome-authentication-agent-1 \
+        /usr/libexec/polkit-gnome-authentication-agent-1 \
+        /usr/lib/polkit-kde-authentication-agent-1
+    do
+        if [[ -x "$candidate" ]]; then agent="$candidate"; break; fi
+    done
+    if [[ -n "$agent" ]]; then
+        start_component "$(basename "$agent")" "$agent"
+    fi
 
     # notification daemon
     case "${KOME_NOTIFICATIONS:-swaync}" in
@@ -42,6 +64,11 @@ start_all() {
         quickshell) start_component "quickshell" "quickshell -c shell.qml" ;;
     esac
 
+    # on-screen display
+    case "${KOME_OSD:-swayosd}" in
+        swayosd) start_component "swayosd-server" "swayosd-server" ;;
+    esac
+
     # lock/idle
     case "${KOME_IDLE:-hypridle}" in
         hypridle) start_component "hypridle" "hypridle" ;;
@@ -54,6 +81,18 @@ start_all() {
         awww)      start_component "awww-daemon" "awww-daemon" ;;
     esac
 
+    # Restore the saved wallpaper. Hyprpaper keeps no state across restarts,
+    # so without this every session starts black. Backgrounded: the daemon
+    # needs a moment, and apply_wallpaper_ipc retries the socket itself.
+    (
+        sleep 1
+        if command -v kome-wallpaper >/dev/null 2>&1; then
+            kome-wallpaper restore >/dev/null 2>&1 || true
+        elif [[ -x "${HOME}/.local/bin/kome-wallpaper" ]]; then
+            "${HOME}/.local/bin/kome-wallpaper" restore >/dev/null 2>&1 || true
+        fi
+    ) &
+
     # clipboard history
     if [[ "${KOME_CLIPBOARD:-cliphist}" == "cliphist" ]]; then
         wl-paste --type text --watch cliphist store >/dev/null 2>&1 &
@@ -63,27 +102,37 @@ start_all() {
     # xdg portals
     systemctl --user import-environment WAYLAND_DISPLAY XDG_CURRENT_DESKTOP 2>/dev/null || true
     dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP 2>/dev/null || true
+
+    # Push the saved wallpaper once the daemon's IPC socket is up, otherwise
+    # every fresh login shows a black desktop.
+    if [[ -x "${HOME}/.local/bin/kome-wallpaper" ]]; then
+        setsid bash -c 'sleep 1; "${HOME}/.local/bin/kome-wallpaper" restore' >/dev/null 2>&1 &
+    fi
 }
 
 stop_all() {
+    # every pkill needs || true: under set -e, pkill exits 1 when the daemon
+    # is not running, which would abort the cleanup mid-way.
     case "${KOME_NOTIFICATIONS:-swaync}" in
-        swaync) pkill swaync 2>/dev/null ;;
-        mako)   pkill mako 2>/dev/null ;;
-        dunst)  pkill dunst 2>/dev/null ;;
+        swaync) pkill swaync 2>/dev/null || true ;;
+        mako)   pkill mako 2>/dev/null || true ;;
+        dunst)  pkill dunst 2>/dev/null || true ;;
     esac
     case "${KOME_BAR:-waybar}" in
-        waybar)     pkill waybar 2>/dev/null ;;
-        quickshell) pkill quickshell 2>/dev/null ;;
+        waybar)     pkill waybar 2>/dev/null || true ;;
+        quickshell) pkill quickshell 2>/dev/null || true ;;
     esac
+    pkill swayosd-server 2>/dev/null || true
     case "${KOME_IDLE:-hypridle}" in
-        hypridle) pkill hypridle 2>/dev/null ;;
-        swayidle) pkill swayidle 2>/dev/null ;;
+        hypridle) pkill hypridle 2>/dev/null || true ;;
+        swayidle) pkill swayidle 2>/dev/null || true ;;
     esac
     case "${KOME_WALLPAPER:-hyprpaper}" in
-        hyprpaper) pkill hyprpaper 2>/dev/null ;;
-        awww)      pkill awww-daemon 2>/dev/null ;;
+        hyprpaper) pkill hyprpaper 2>/dev/null || true ;;
+        awww)      pkill awww-daemon 2>/dev/null || true ;;
     esac
     pkill -f "wl-paste.*cliphist" 2>/dev/null || true
+    pkill -f "polkit-gnome-authentication-agent-1" 2>/dev/null || true
     pkill -f "polkit-kde-authentication-agent-1" 2>/dev/null || true
 }
 

@@ -7,7 +7,7 @@ KOME_STATE_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/kome"
 PROVIDERS_FILE="${KOME_STATE_DIR}/providers.env"
 
 # shellcheck disable=SC1090
-[[ -f "$PROVIDERS_FILE" ]] && source "$PROVIDERS_FILE"
+if [[ -f "$PROVIDERS_FILE" ]]; then source "$PROVIDERS_FILE"; fi
 
 if ! command -v cliphist >/dev/null 2>&1; then
     notify-send "cliphist not installed" 2>/dev/null || true

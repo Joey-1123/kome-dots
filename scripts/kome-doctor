@@ -7,11 +7,22 @@ KOME_STATE_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/kome"
 PROVIDERS_FILE="${KOME_STATE_DIR}/providers.env"
 
 # shellcheck disable=SC1090
-[[ -f "$PROVIDERS_FILE" ]] && source "$PROVIDERS_FILE"
+if [[ -f "$PROVIDERS_FILE" ]]; then source "$PROVIDERS_FILE"; fi
 
 ok() { printf '\033[32m[OK]\033[0m %s\n' "$*"; }
 warn() { printf '\033[33m[WARN]\033[0m %s\n' "$*"; }
 err() { printf '\033[31m[ERR]\033[0m %s\n' "$*"; }
+
+# running <name> — pgrep by process name, falling back to full cmdline for
+# names longer than the 15-char pgrep limit.
+running() {
+    local name="$1"
+    if ((${#name} > 15)); then
+        pgrep -f -- "$name" >/dev/null 2>&1
+    else
+        pgrep -x "$name" >/dev/null 2>&1
+    fi
+}
 
 echo "=== kome doctor ==="
 echo "State dir: $KOME_STATE_DIR"
@@ -34,16 +45,52 @@ else
     err "hyprland.lua has errors (run: hyprland --verify-config)"
 fi
 
-# running daemons
+# running daemons — only the *selected* provider is relevant, plus
+# on-demand daemons are reported as idle rather than broken.
 echo ""
 echo "--- Daemons ---"
-for d in waybar swaync mako dunst hypridle hyprpaper hyprlock awww polkit-kde-authentication-agent-1; do
-    if pgrep -x "$d" >/dev/null; then
-        ok "$d running"
+check_daemon() {
+    local name="$1" label="$2"
+    if running "$name"; then
+        ok "$label running"
     else
-        warn "$d not running"
+        warn "$label not running"
     fi
-done
+}
+case "${KOME_BAR:-waybar}" in
+    waybar) check_daemon waybar "bar (waybar)" ;;
+    quickshell) check_daemon quickshell "bar (quickshell)" ;;
+esac
+case "${KOME_NOTIFICATIONS:-swaync}" in
+    swaync) check_daemon swaync "notifications (swaync)" ;;
+    mako)   check_daemon mako "notifications (mako)" ;;
+    dunst)  check_daemon dunst "notifications (dunst)" ;;
+esac
+case "${KOME_IDLE:-hypridle}" in
+    hypridle) check_daemon hypridle "idle (hypridle)" ;;
+    swayidle) check_daemon swayidle "idle (swayidle)" ;;
+esac
+case "${KOME_WALLPAPER:-hyprpaper}" in
+    hyprpaper) check_daemon hyprpaper "wallpaper (hyprpaper)" ;;
+    awww)      check_daemon awww-daemon "wallpaper (awww)" ;;
+esac
+case "${KOME_OSD:-swayosd}" in
+    swayosd) check_daemon swayosd-server "osd (swayosd)" ;;
+esac
+
+# On-demand: launched by a keybind, so absence is normal.
+echo ""
+echo "--- On-demand (absent is normal) ---"
+printf '  %-22s: %s\n' "lock" "${KOME_LOCK:-unset}"
+
+# auth agent
+echo ""
+echo "--- Auth agent ---"
+if running polkit-gnome-authentication-agent-1 || running polkit-kde-authentication-agent-1; then
+    ok "polkit authentication agent running"
+else
+    err "no polkit authentication agent (GUI auth prompts will fail)"
+fi
 
 # matugen
 echo ""
@@ -54,20 +101,41 @@ else
     warn "matugen not installed"
 fi
 
-# config symlinks
+# config symlinks — the installer links per file (not per directory), so a
+# real ~/.config/<dir> directory whose files symlink into the repo is healthy.
+DOCTOR_REPO_CONFIG="$(cd -- "$(dirname -- "$(readlink -f "${BASH_SOURCE[0]}")")/../config" 2>/dev/null && pwd || echo "")"
 echo ""
 echo "--- Config Links ---"
 for dir in hypr kitty waybar rofi swaync mako dunst wofi fuzzel yazi matugen gtk-3.0 gtk-4.0 qt6ct; do
     target="${HOME}/.config/$dir"
     if [[ -L "$target" ]]; then
         src="$(readlink -f "$target")"
-        if [[ "$src" == *"projects/rice/config"* ]]; then
+        if [[ -n "$DOCTOR_REPO_CONFIG" && "$src" == "$DOCTOR_REPO_CONFIG"* ]]; then
             ok "$dir linked"
         else
             warn "$dir linked elsewhere: $src"
         fi
     elif [[ -d "$target" ]]; then
-        warn "$dir exists but not a symlink"
+        # dirs of alternative providers that are not selected are expected empty
+        selected=""
+        case "$dir" in
+            mako|dunst)  selected="${KOME_NOTIFICATIONS:-swaync}" ;;
+            wofi|fuzzel) selected="${KOME_LAUNCHER:-rofi}" ;;
+        esac
+        if [[ -n "$selected" && "$selected" != "$dir" ]]; then
+            ok "$dir not selected (provider: $selected)"
+            continue
+        fi
+        if [[ -z "$DOCTOR_REPO_CONFIG" ]]; then
+            warn "$dir present, but repo config root could not be resolved"
+            continue
+        fi
+        linked="$(find "$target" -maxdepth 2 -type l 2>/dev/null | while read -r l; do readlink -f "$l"; done | grep -c "^${DOCTOR_REPO_CONFIG}/" || true)"
+        if [[ "$linked" -gt 0 ]]; then
+            ok "$dir linked ($linked file(s))"
+        else
+            warn "$dir exists but no repo files are linked inside"
+        fi
     else
         warn "$dir missing"
     fi

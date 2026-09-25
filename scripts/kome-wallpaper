@@ -6,6 +6,10 @@ set -euo pipefail
 KOME_STATE_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/kome"
 MODE_FILE="${KOME_STATE_DIR}/mode"
 WALLPAPER_FILE="${KOME_STATE_DIR}/wallpaper"
+PROVIDERS_FILE="${KOME_STATE_DIR}/providers.env"
+# shellcheck disable=SC1090
+if [[ -f "$PROVIDERS_FILE" ]]; then source "$PROVIDERS_FILE"; fi
+KOME_ROOT="${KOME_ROOT:-$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)}"
 
 usage() {
     cat <<'EOF'
@@ -28,19 +32,30 @@ get_mode() {
 
 get_wallpaper_dir() {
     local mode="${1:-$(get_mode)}"
-    echo "${HOME}/.local/share/kome/wallpapers/${mode}"
+    local user_dir="${HOME}/.local/share/kome/wallpapers/${mode}"
+    # installer may not have copied the starter set — fall back to the repo
+    if [[ -d "$user_dir" ]]; then
+        echo "$user_dir"
+    else
+        echo "${KOME_ROOT}/wallpapers/${mode}"
+    fi
 }
 
-set_wallpaper() {
-    local file="$1" mode
-    mode="$(get_mode)"
-    [[ -f "$file" ]] || { echo "file not found: $file" >&2; exit 1; }
-
-    # set via provider
+# apply_wallpaper_ipc <file> — push the wallpaper to the active provider.
+# hyprpaper gets retries: at session start the daemon/socket may still be up.
+apply_wallpaper_ipc() {
+    local file="$1" i
     case "${KOME_WALLPAPER:-hyprpaper}" in
         hyprpaper)
-            hyprctl hyprpaper preload "$file" >/dev/null 2>&1 || true
-            hyprctl hyprpaper wallpaper ",$file" >/dev/null 2>&1 || true
+            # hyprpaper 0.8+: only the `wallpaper` request exists
+            # (preload/unload/reload/listloaded were removed upstream).
+            for i in $(seq 1 10); do
+                if hyprctl hyprpaper wallpaper ",$file" >/dev/null 2>&1; then
+                    return 0
+                fi
+                sleep 0.5
+            done
+            return 1
             ;;
         awww)
             awww-cli set "$file" >/dev/null 2>&1 || true
@@ -49,6 +64,14 @@ set_wallpaper() {
             # quickshell handles its own wallpaper via hyprquickpaper
             ;;
     esac
+}
+
+set_wallpaper() {
+    local file="$1" mode
+    mode="$(get_mode)"
+    [[ -f "$file" ]] || { echo "file not found: $file" >&2; exit 1; }
+
+    apply_wallpaper_ipc "$file" || warn_ipc
 
     echo "$file" >"$WALLPAPER_FILE"
     # regenerate theme for current mode with new wallpaper
@@ -116,7 +139,17 @@ restore_wallpaper() {
     local file
     file="$(cat "$WALLPAPER_FILE" 2>/dev/null || true)"
     [[ -f "$file" ]] || { echo "no saved wallpaper" >&2; exit 1; }
-    set_wallpaper "$file"
+    # IPC only — theme files persist across sessions; re-running matugen and
+    # notifying on every login would be noise. Regenerate only if missing.
+    if [[ ! -f "${XDG_CONFIG_HOME:-$HOME/.config}/waybar/theme.css" ]]; then
+        kome-theme apply "$(get_mode)" --wallpaper "$file" --no-reload >/dev/null 2>&1 || true
+    fi
+    apply_wallpaper_ipc "$file"
+}
+
+warn_ipc() {
+    echo "warning: wallpaper IPC failed (provider '${KOME_WALLPAPER:-hyprpaper}' unreachable)" >&2
+    return 0
 }
 
 case "${1:-}" in
