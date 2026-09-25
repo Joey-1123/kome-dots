@@ -173,9 +173,11 @@ PanelWindow {
                     cache: false
                     smooth: true
 
+                    // Join explicitly: config paths carry no trailing slash,
+                    // and concatenating without one yields ".../thumbs01.png".
                     source: "file://" +
                             main.homeDir + "/" +
-                            configs.cache_path +
+                            configs.cache_path.replace(/\/+$/, "") + "/" +
                             fileName
 
                     // Decode once at max zoomed size.

@@ -102,7 +102,8 @@ hl.bind(m .. " + SHIFT + G", hl.dsp.exec_cmd("kome-gammastep"))
 hl.bind(m .. " + M", hl.dsp.exec_cmd("kome-gamemode toggle"))
 
 -- Wallpaper picker ---------------------------------------------------------
-hl.bind(m .. " + W", hl.dsp.exec_cmd("kome-wallpaper pick"))
+-- Wallpaper picker (visual grid via quickshell; falls back to a text list)
+hl.bind(m .. " + W", hl.dsp.exec_cmd("kome-wallpaper picker"))
 
 -- Brightness ---------------------------------------------------------------
 hl.bind("XF86MonBrightnessUp",   hl.dsp.exec_cmd("kome-osd brightness-up"),   { locked = true, repeating = true })
