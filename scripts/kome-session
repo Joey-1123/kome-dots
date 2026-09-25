@@ -73,7 +73,9 @@ start_all() {
     # hot-corner triggers. Skipped when quickshell is the bar, since that
     # provider owns shell.qml itself.
     if [[ "${KOME_BAR:-waybar}" != "quickshell" ]] && command -v qs >/dev/null 2>&1; then
-        start_component "quickshell" "qs"
+        # the process is named "qs", not "quickshell" — matching the wrong
+        # name makes every session start spawn another copy
+        start_component "qs" "qs"
     fi
 
     # network tray applet — provides the clickable wifi/ethernet UI
@@ -132,10 +134,9 @@ stop_all() {
     esac
     case "${KOME_BAR:-waybar}" in
         waybar)     pkill waybar 2>/dev/null || true ;;
-        quickshell) pkill quickshell 2>/dev/null || true ;;
+        quickshell) pkill -x qs 2>/dev/null || true ;;
     esac
-    # the root quickshell (settings/OSD/hot corners) when the bar isn't using it
-    pkill -f "qs$" 2>/dev/null || true
+    pkill -x qs 2>/dev/null || true
     pkill swayosd-server 2>/dev/null || true
     pkill nm-applet 2>/dev/null || true
     case "${KOME_IDLE:-hypridle}" in
