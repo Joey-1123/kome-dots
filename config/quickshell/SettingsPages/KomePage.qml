@@ -15,6 +15,7 @@ Item {
     property string dateText: ""
     property string statusText: "Ready"
     property string pendingAction: ""
+    property var pendingSessionAction: null
     property string actionOutput: ""
     property bool actionFailed: false
     property bool refreshThemeAfterAction: false
@@ -24,6 +25,14 @@ Item {
     readonly property string themeLabel: themePreset
         ? themePreset.replace("-", " ").replace(/\b\w/g, function(c) { return c.toUpperCase() })
         : themeMode === "dark" ? "Dark" : "Light"
+
+    DesktopControlService {
+        id: desktopControl
+    }
+
+    SessionControlService {
+        id: sessionControl
+    }
 
     function refreshTheme() {
         themeReader.running = true
@@ -91,6 +100,13 @@ Item {
             runAfterClosing(["kome-screenshot", "region"], "Screenshot")
             break
         case "record": runAction(["kome-record"], "Screen recorder"); break
+        case "bar": desktopControl.toggleBar(); break
+        case "game": desktopControl.toggleGameMode(); break
+        case "night": desktopControl.toggleNightLight(); break
+        case "opacity": desktopControl.toggleOpacity(); break
+        case "updates": desktopControl.checkUpdates(); break
+        case "doctor": desktopControl.runDoctor(); break
+        case "lock": sessionControl.lock(); break
         }
     }
 
@@ -208,6 +224,32 @@ Item {
         onTriggered: page.runAction(command, label)
     }
 
+    ConfirmDialog {
+        parent: page
+        open: page.pendingSessionAction !== null
+        title: page.pendingSessionAction
+            ? page.pendingSessionAction.charAt(0).toUpperCase() + page.pendingSessionAction.slice(1)
+            : "Confirm session action"
+        message: page.pendingSessionAction === "logout"
+            ? "Log out of the current Hyprland session?"
+            : page.pendingSessionAction === "suspend"
+                ? "Suspend the computer now?"
+                : page.pendingSessionAction === "reboot"
+                    ? "Reboot the computer now?"
+                    : "Shut down the computer now?"
+        confirmText: page.pendingSessionAction
+            ? page.pendingSessionAction.toUpperCase()
+            : "CONFIRM"
+        destructive: true
+        onCancelled: page.pendingSessionAction = null
+        onConfirmed: {
+            if (page.pendingSessionAction) {
+                sessionControl.runDisruptive(page.pendingSessionAction)
+            }
+            page.pendingSessionAction = null
+        }
+    }
+
     Timer {
         interval: 1000
         running: true
@@ -234,7 +276,9 @@ Item {
                 dateText: page.dateText
                 clockText: page.clockText
                 themeLabel: page.themeLabel
-                updateText: "Updates: " + page.updateText
+                updateText: desktopControl.updateCount < 0
+                     ? "Updates: not checked"
+                     : "Updates: " + desktopControl.updateCount + " pending"
             }
 
             KomeQuickActions {
@@ -252,6 +296,35 @@ Item {
                 onPresetRequested: preset => page.applyPreset(preset)
                 onModeRequested: mode => page.applyMode(mode)
                 onWallpaperRequested: action => page.applyWallpaper(action)
+            }
+
+            KomeDesktopControls {
+                width: parent.width
+                busy: desktopControl.busy
+                barRunning: desktopControl.barRunning
+                gameMode: desktopControl.gameMode
+                nightLight: desktopControl.nightLight
+                windowOpacity: desktopControl.windowOpacity
+                updateCount: desktopControl.updateCount
+                statusText: desktopControl.statusText
+                actionOutput: desktopControl.actionOutput
+                doctorOutput: desktopControl.doctorOutput
+                actionFailed: desktopControl.actionFailed
+                onBarRequested: desktopControl.toggleBar()
+                onGameModeRequested: desktopControl.toggleGameMode()
+                onNightLightRequested: desktopControl.toggleNightLight()
+                onOpacityRequested: desktopControl.toggleOpacity()
+                onUpdatesRequested: desktopControl.checkUpdates()
+                onDoctorRequested: desktopControl.runDoctor()
+            }
+
+            KomeSessionControls {
+                width: parent.width
+                busy: sessionControl.busy
+                statusText: sessionControl.statusText
+                actionFailed: sessionControl.actionFailed
+                onLockRequested: sessionControl.lock()
+                onDisruptiveRequested: action => page.pendingSessionAction = action
             }
 
             Rectangle {

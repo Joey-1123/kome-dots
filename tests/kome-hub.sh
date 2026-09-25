@@ -100,6 +100,38 @@ contains config/quickshell/SettingsWindow.qml 'page: "KomePage"' \
     "Kome overview is the first hub page"
 contains config/quickshell/SettingsWindow.qml 'page: "ShortcutsPage"' \
     "Shortcuts is available from the hub navigation"
+contains config/quickshell/SettingsPages/KomePage.qml 'KomeDesktopControls' \
+    "Kome overview exposes desktop controls"
+contains config/quickshell/SettingsPages/KomePage.qml 'KomeSessionControls' \
+    "Kome overview exposes session controls"
+contains config/quickshell/DesktopControlService.qml '["kome-bar", "toggle"]' \
+    "desktop controls use the bar provider command"
+contains config/quickshell/DesktopControlService.qml '["kome-gamemode", "toggle"]' \
+    "desktop controls use the game-mode command"
+contains config/quickshell/DesktopControlService.qml '["kome-gammastep"]' \
+    "desktop controls use the night-light command"
+contains config/quickshell/DesktopControlService.qml '["kome-opacity"]' \
+    "desktop controls use the opacity command"
+contains config/quickshell/DesktopControlService.qml '["kome-updates", "count"]' \
+    "desktop controls read pending updates"
+contains config/quickshell/DesktopControlService.qml '["kome-doctor"]' \
+    "desktop controls expose doctor diagnostics"
+contains config/quickshell/SettingsPages/KomePage.qml 'ConfirmDialog' \
+    "disruptive session actions use shared confirmation"
+contains config/quickshell/SettingsPages/KomePage.qml 'pendingSessionAction' \
+    "Kome tracks the pending session action"
+contains config/quickshell/SessionControlService.qml '["systemctl", "reboot"]' \
+    "session service keeps reboot behind confirmation"
+contains config/quickshell/SessionControlService.qml '["systemctl", "poweroff"]' \
+    "session service keeps shutdown behind confirmation"
+contains config/quickshell/SettingsPages/KomePage.qml 'case "bar"' \
+    "typed quick actions expose reversible bar control"
+contains config/quickshell/SettingsPages/KomePage.qml 'case "game"' \
+    "typed quick actions expose reversible game-mode control"
+contains config/quickshell/SettingsPages/KomePage.qml 'case "night"' \
+    "typed quick actions expose reversible night-light control"
+contains config/quickshell/SettingsPages/KomePage.qml 'case "opacity"' \
+    "typed quick actions expose reversible opacity control"
 contains config/quickshell/SettingsWindow.qml 'property alias showing: settingsState.showing' \
     "hub visibility survives Quickshell reloads"
 contains config/quickshell/SettingsWindow.qml 'function showPage(name: string): void' \

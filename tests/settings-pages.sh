@@ -37,6 +37,10 @@ component_contract ConfirmDialog.qml "shared confirmation overlay"
 component_contract StorageUsage.qml "shared filesystem usage visualization"
 component_contract ConfigService.qml "shared config launcher service"
 component_contract ShortcutService.qml "shared keybind reference service"
+component_contract KomeDesktopControls.qml "Kome desktop controls surface"
+component_contract KomeSessionControls.qml "Kome session controls surface"
+component_contract DesktopControlService.qml "Kome desktop action service"
+component_contract SessionControlService.qml "Kome session action service"
 
 if [[ -f "$ROOT/config/quickshell/SettingsPage.qml" ]]; then
     if grep -Fq 'bottomPadding: 18' "$ROOT/config/quickshell/SettingsPage.qml"; then
