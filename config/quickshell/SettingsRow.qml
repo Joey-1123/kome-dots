@@ -18,6 +18,7 @@ Rectangle {
     activeFocusOnTab: clickable
     implicitHeight: 58
     height: implicitHeight
+    width: parent.width
     radius: Theme.radius
     color: danger
         ? Theme.alpha(Theme.danger, row.hovered || row.activeFocus ? 0.10 : 0.05)

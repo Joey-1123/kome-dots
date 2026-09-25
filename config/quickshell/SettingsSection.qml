@@ -8,17 +8,20 @@ Rectangle {
 
     default property alias content: body.data
 
-    height: body.implicitHeight + 36
+    height: body.childrenRect.height + 36
     radius: Theme.radius
     color: Theme.bgCard
     border.width: 1
     border.color: Theme.border
+
+    Component.onCompleted: body.forceLayout()
 
     Column {
         id: body
         anchors.fill: parent
         anchors.margins: 18
         spacing: 12
+        onChildrenChanged: forceLayout()
 
         Text {
             text: section.title

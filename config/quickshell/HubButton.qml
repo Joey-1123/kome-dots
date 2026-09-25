@@ -12,6 +12,7 @@ Rectangle {
 
     activeFocusOnTab: enabled
     implicitHeight: 38
+    implicitWidth: buttonContent.implicitWidth + 28
     radius: Theme.radius
     color: !enabled
         ? Theme.alpha(Theme.textFaint, 0.08)
@@ -29,6 +30,7 @@ Rectangle {
     opacity: enabled ? 1 : 0.45
 
     Row {
+        id: buttonContent
         anchors.centerIn: parent
         spacing: 8
 

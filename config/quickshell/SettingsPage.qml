@@ -10,12 +10,14 @@ Item {
 
     default property alias content: body.data
 
+    Component.onCompleted: body.forceLayout()
+
     Flickable {
         id: scroll
         anchors.fill: parent
         clip: true
         contentWidth: width
-        contentHeight: body.implicitHeight
+        contentHeight: body.childrenRect.height + 18
         boundsBehavior: Flickable.StopAtBounds
 
         Column {
@@ -23,6 +25,7 @@ Item {
             width: scroll.width
             spacing: 16
             bottomPadding: 18
+            onChildrenChanged: forceLayout()
 
             Item {
                 width: parent.width

@@ -52,6 +52,26 @@ if [[ -f "$ROOT/config/quickshell/SettingsRow.qml" ]]; then
     else
         fail "clickable settings rows are keyboard accessible"
     fi
+    if grep -Fq $'height: implicitHeight\n    width: parent.width' "$ROOT/config/quickshell/SettingsRow.qml"; then
+        pass "settings rows fill their section slot"
+    else
+        fail "settings rows fill their section slot"
+    fi
+fi
+
+if [[ -f "$ROOT/config/quickshell/SettingsSection.qml" ]]; then
+    if grep -Fq 'onChildrenChanged: forceLayout()' "$ROOT/config/quickshell/SettingsSection.qml" \
+        && grep -Fq 'body.childrenRect.height' "$ROOT/config/quickshell/SettingsSection.qml"; then
+        pass "settings sections lay out slotted children"
+    else
+        fail "settings sections lay out slotted children"
+    fi
+fi
+
+if grep -Fq 'implicitWidth: buttonContent.implicitWidth + 28' "$ROOT/config/quickshell/HubButton.qml"; then
+    pass "Hub buttons size to trailing content"
+else
+    fail "Hub buttons size to trailing content"
 fi
 
 if [[ -f "$ROOT/config/quickshell/MetricCard.qml" ]]; then
@@ -70,6 +90,61 @@ if [[ -f "$ROOT/config/quickshell/EmptyState.qml" ]]; then
     else
         fail "empty states distinguish loading and errors"
     fi
+fi
+
+system_page="$ROOT/config/quickshell/SettingsPages/SystemPage.qml"
+system_telemetry="$ROOT/config/quickshell/SystemTelemetry.qml"
+if grep -Fq 'SettingsPage {' "$system_page"; then
+    pass "System page uses the shared page frame"
+else
+    fail "System page uses the shared page frame"
+fi
+if [[ "$(grep -Fc 'MetricCard {' "$system_page")" -ge 3 ]]; then
+    pass "System page leads with three live metric cards"
+else
+    fail "System page leads with three live metric cards"
+fi
+if grep -Fq 'SettingsSection {' "$system_page" \
+    && grep -Fq 'SettingsRow {' "$system_page"; then
+    pass "System page uses shared sections and rows"
+else
+    fail "System page uses shared sections and rows"
+fi
+if grep -Fq 'component HardwareGraph' "$system_page"; then
+    fail "System page removes the legacy inline hardware graph"
+else
+    pass "System page removes the legacy inline hardware graph"
+fi
+if grep -Eq 'property int rightMargin|contentRightMargin' "$system_page"; then
+    fail "System page has no page-specific right margin"
+else
+    pass "System page has no page-specific right margin"
+fi
+if grep -Fq 'interval: 2000' "$system_telemetry" \
+    && grep -Fq 'interval: 5000' "$system_telemetry" \
+    && [[ "$(grep -Fc 'running: true' "$system_telemetry")" -ge 2 ]]; then
+    pass "System telemetry avoids one-second expensive polling"
+else
+    fail "System telemetry avoids one-second expensive polling"
+fi
+if grep -Fq 'command: ["uname", "-n"]' "$ROOT/config/quickshell/SystemTelemetry.qml" \
+    || grep -Fq 'command: ["uname", "-n"]' "$system_page"; then
+    pass "System identity avoids the unavailable hostname binary"
+else
+    fail "System identity avoids the unavailable hostname binary"
+fi
+if grep -Fq 'SystemTelemetry {' "$system_page" \
+    && [[ "$(wc -l < "$system_page")" -le 220 ]]; then
+    pass "System page separates telemetry from its compact UI"
+else
+    fail "System page separates telemetry from its compact UI"
+fi
+if grep -Fq 'Item {' "$system_telemetry" \
+    && grep -Fq 'visible: false' "$system_telemetry" \
+    && grep -Fq 'width: 0' "$system_telemetry"; then
+    pass "System telemetry owns hidden nonvisual resources"
+else
+    fail "System telemetry owns hidden nonvisual resources"
 fi
 
 if [[ "$FAIL" -eq 0 ]]; then
