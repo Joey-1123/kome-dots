@@ -147,6 +147,36 @@ else
     fail "System telemetry owns hidden nonvisual resources"
 fi
 
+audio_page="$ROOT/config/quickshell/SettingsPages/SoundPage.qml"
+if grep -Fq 'SettingsPage {' "$audio_page"; then
+    pass "Audio page uses the shared page frame"
+else
+    fail "Audio page uses the shared page frame"
+fi
+if [[ "$(grep -Fc 'SettingsSection {' "$audio_page")" -ge 4 ]] \
+    && grep -Fq 'SettingsRow {' "$audio_page"; then
+    pass "Audio page separates output, input, devices, and streams"
+else
+    fail "Audio page separates output, input, devices, and streams"
+fi
+if [[ "$(grep -Fc 'EmptyState {' "$audio_page")" -ge 2 ]]; then
+    pass "Audio page exposes output, input, and stream empty states"
+else
+    fail "Audio page exposes output, input, and stream empty states"
+fi
+if grep -Fq 'Pipewire.preferredDefaultAudioSink' "$audio_page" \
+    && grep -Fq 'Pipewire.preferredDefaultAudioSource' "$audio_page"; then
+    pass "Audio page keeps default routing controls"
+else
+    fail "Audio page keeps default routing controls"
+fi
+if grep -Eq 'property real marginRight|property int sliderMarginRight' "$audio_page" \
+    || [[ "$(wc -l < "$audio_page")" -gt 240 ]]; then
+    fail "Audio page uses the shared compact layout"
+else
+    pass "Audio page uses the shared compact layout"
+fi
+
 if [[ "$FAIL" -eq 0 ]]; then
     echo "=== settings-pages: all pass ==="
 else
