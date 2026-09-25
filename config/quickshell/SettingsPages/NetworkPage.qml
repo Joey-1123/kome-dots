@@ -10,6 +10,7 @@ SettingsPage {
     busy: service.errorText.length > 0
 
     property string searchText: ""
+    onSearchTextChanged: resetScroll()
 
     function filteredNetworks() {
         const query = searchText.trim().toLowerCase()

@@ -98,6 +98,8 @@ fi
 
 contains config/quickshell/SettingsWindow.qml 'page: "KomePage"' \
     "Kome overview is the first hub page"
+contains config/quickshell/SettingsWindow.qml 'page: "ShortcutsPage"' \
+    "Shortcuts is available from the hub navigation"
 contains config/quickshell/SettingsWindow.qml 'property alias showing: settingsState.showing' \
     "hub visibility survives Quickshell reloads"
 contains config/quickshell/SettingsWindow.qml 'function showPage(name: string): void' \

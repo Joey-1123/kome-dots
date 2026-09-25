@@ -10,6 +10,7 @@ SettingsPage {
     busy: false
 
     property string searchText: ""
+    onSearchTextChanged: resetScroll()
 
     ConfigService {
         id: service

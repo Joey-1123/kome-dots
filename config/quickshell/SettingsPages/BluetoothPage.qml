@@ -17,6 +17,7 @@ SettingsPage {
     property string searchText: ""
     property var pendingForget: null
 
+    onSearchTextChanged: resetScroll()
     onVisibleChanged: service.pageVisible = visible
     Component.onCompleted: service.pageVisible = visible
     Component.onDestruction: service.pageVisible = false

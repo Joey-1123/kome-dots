@@ -115,6 +115,7 @@ PanelWindow {
 
     property var navItems: [
         { name: "Kome", icon: "󰒓", page: "KomePage" },
+        { name: "Shortcuts", icon: "󰌌", page: "ShortcutsPage" },
         { name: "System", icon: "󰒛", page: "SystemPage" },
         { name: "Audio", icon: "\uf028", page: "SoundPage" },
         { name: "Display", icon: "\uf108", page: "MonitorsPage" },

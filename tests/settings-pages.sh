@@ -36,6 +36,7 @@ component_contract NetworkHero.qml "shared active network summary"
 component_contract ConfirmDialog.qml "shared confirmation overlay"
 component_contract StorageUsage.qml "shared filesystem usage visualization"
 component_contract ConfigService.qml "shared config launcher service"
+component_contract ShortcutService.qml "shared keybind reference service"
 
 if [[ -f "$ROOT/config/quickshell/SettingsPage.qml" ]]; then
     if grep -Fq 'bottomPadding: 18' "$ROOT/config/quickshell/SettingsPage.qml"; then
@@ -382,6 +383,24 @@ if grep -Eq 'marginRight|sliderMarginRight|#[0-9a-fA-F]{6,8}' "$configs_page"; t
     fail "Configs page uses shared layout and semantic tokens"
 else
     pass "Configs page uses shared layout and semantic tokens"
+fi
+
+shortcuts_page="$ROOT/config/quickshell/SettingsPages/ShortcutsPage.qml"
+shortcut_service="$ROOT/config/quickshell/ShortcutService.qml"
+if grep -Fq 'SettingsPage {' "$shortcuts_page" \
+    && grep -Fq 'ShortcutService {' "$shortcuts_page" \
+    && grep -Fq 'SettingsSearch {' "$shortcuts_page" \
+    && grep -Fq 'EmptyState {' "$shortcuts_page"; then
+    pass "Shortcuts page uses shared search and state components"
+else
+    fail "Shortcuts page uses shared search and state components"
+fi
+if grep -Fq '["kome-keybinds", "--list"]' "$shortcut_service" \
+    && grep -Fq 'function filtered' "$shortcut_service" \
+    && grep -Fq 'loading' "$shortcut_service"; then
+    pass "Shortcuts service parses the canonical keybind list"
+else
+    fail "Shortcuts service parses the canonical keybind list"
 fi
 
 if [[ "$FAIL" -eq 0 ]]; then

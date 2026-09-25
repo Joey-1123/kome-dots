@@ -10,9 +10,13 @@ Item {
 
     default property alias content: body.data
 
+    function resetScroll() {
+        scroll.contentY = 0
+    }
+
     Component.onCompleted: {
         body.forceLayout()
-        scroll.contentY = 0
+        page.resetScroll()
     }
 
     Flickable {
