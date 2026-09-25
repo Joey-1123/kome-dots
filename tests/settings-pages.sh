@@ -34,6 +34,7 @@ component_contract EmptyState.qml "shared loading/empty/error state"
 component_contract SettingsSearch.qml "shared keyboard search field"
 component_contract NetworkHero.qml "shared active network summary"
 component_contract ConfirmDialog.qml "shared confirmation overlay"
+component_contract StorageUsage.qml "shared filesystem usage visualization"
 
 if [[ -f "$ROOT/config/quickshell/SettingsPage.qml" ]]; then
     if grep -Fq 'bottomPadding: 18' "$ROOT/config/quickshell/SettingsPage.qml"; then
@@ -307,6 +308,41 @@ if grep -Eq '#[0-9a-fA-F]{6,8}|contentRightMargin' "$bluetooth_page"; then
     fail "Bluetooth page uses shared semantic tokens"
 else
     pass "Bluetooth page uses shared semantic tokens"
+fi
+
+storage_page="$ROOT/config/quickshell/SettingsPages/StoragePage.qml"
+storage_service="$ROOT/config/quickshell/StorageService.qml"
+if grep -Fq 'SettingsPage {' "$storage_page" \
+    && grep -Fq 'StorageService {' "$storage_page" \
+    && grep -Fq 'StorageUsage {' "$storage_page" \
+    && [[ "$(wc -l < "$storage_page")" -le 260 ]]; then
+    pass "Storage page separates collection from its UI"
+else
+    fail "Storage page separates collection from its UI"
+fi
+if grep -Fq 'ConfirmDialog {' "$storage_page" \
+    && grep -Fq 'function runCleanup(key)' "$storage_service" \
+    && grep -Fq 'cleanupActions' "$storage_service"; then
+    pass "Storage cleanup actions use confirmation and fixed service commands"
+else
+    fail "Storage cleanup actions use confirmation and fixed service commands"
+fi
+if grep -Eq 'contentRightMargin|confirmPopup|ToolButton|color: .#[0-9a-fA-F]' "$storage_page"; then
+    fail "Storage page removes legacy margins and raw destructive popup colors"
+else
+    pass "Storage page removes legacy margins and raw destructive popup colors"
+fi
+if grep -Eq 'rm -rf|paccache|journalctl|flatpak uninstall' "$storage_page"; then
+    fail "Storage page does not embed destructive shell commands"
+else
+    pass "Storage page does not embed destructive shell commands"
+fi
+if grep -Fq '"df", "-P"' "$storage_service" \
+    && grep -Fq 'lsblk' "$storage_service" \
+    && grep -Fq 'function usageForDisk' "$storage_service"; then
+    pass "Storage service reports filesystems and per-disk usage"
+else
+    fail "Storage service reports filesystems and per-disk usage"
 fi
 
 if [[ "$FAIL" -eq 0 ]]; then
