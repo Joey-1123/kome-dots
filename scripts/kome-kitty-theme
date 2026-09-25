@@ -1,0 +1,121 @@
+#!/usr/bin/env bash
+# kome-kitty-theme — list and apply the vendored Kitty theme library.
+set -euo pipefail
+
+KITTY_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/kitty"
+THEME_DIR="$KITTY_DIR/themes"
+ACTIVE_THEME="$KITTY_DIR/theme.conf"
+GENERATED_COLORS="$KITTY_DIR/colors.conf"
+
+usage() {
+    cat <<'EOF'
+kome-kitty-theme — manage Kitty color themes
+
+Usage:
+  kome-kitty-theme list
+  kome-kitty-theme current
+  kome-kitty-theme apply <theme>
+  kome-kitty-theme reset
+  kome-kitty-theme path <theme>
+EOF
+}
+
+list_themes() {
+    if [[ ! -d "$THEME_DIR" ]]; then
+        return 0
+    fi
+    find -L "$THEME_DIR" -maxdepth 1 -type f -name '*.conf' -printf '%f\n' \
+        | sed 's/\.conf$//' \
+        | sort
+}
+
+current_theme() {
+    if [[ -L "$ACTIVE_THEME" ]]; then
+        local target
+        target="$(readlink -f "$ACTIVE_THEME" 2>/dev/null || true)"
+        if [[ -n "$target" && -f "$target" ]]; then
+            if grep -Fq 'include colors.conf' "$target"; then
+                printf '%s\n' generated
+            else
+                basename "$target" .conf
+            fi
+            return 0
+        fi
+    fi
+    if [[ -f "$ACTIVE_THEME" ]] && grep -Fq 'include colors.conf' "$ACTIVE_THEME"; then
+        printf '%s\n' generated
+        return 0
+    fi
+    printf '%s\n' unknown
+}
+
+validate_theme() {
+    local name="$1"
+    [[ "$name" =~ ^[A-Za-z0-9_.-]+$ ]] || {
+        printf 'invalid theme name: %s\n' "$name" >&2
+        return 1
+    }
+    [[ -f "$THEME_DIR/$name.conf" ]] || {
+        printf 'unknown theme: %s\n' "$name" >&2
+        printf 'available themes:\n' >&2
+        list_themes >&2
+        return 1
+    }
+}
+
+apply_theme() {
+    local name="$1"
+    validate_theme "$name"
+    mkdir -p "$KITTY_DIR"
+    ln -sfn "$THEME_DIR/$name.conf" "$ACTIVE_THEME"
+    if command -v kitty >/dev/null 2>&1 \
+        && kitty @ set-colors --all --configured "$THEME_DIR/$name.conf" >/dev/null 2>&1; then
+        printf 'applied %s to running Kitty windows\n' "$name"
+    else
+        printf 'applied %s for new Kitty windows (remote control unavailable)\n' "$name"
+    fi
+}
+
+reset_theme() {
+    mkdir -p "$KITTY_DIR"
+    rm -f "$ACTIVE_THEME"
+    {
+        printf '%s\n' '# Default Kitty theme: use the active Kome/matugen palette.'
+        printf '%s\n' 'include colors.conf'
+    } >"$ACTIVE_THEME"
+    if command -v kitty >/dev/null 2>&1 && [[ -f "$GENERATED_COLORS" ]] \
+        && kitty @ set-colors --all --configured "$GENERATED_COLORS" >/dev/null 2>&1; then
+        printf '%s\n' 'reset to the generated Kome palette'
+    else
+        printf '%s\n' 'reset to the generated Kome palette for new Kitty windows'
+    fi
+}
+
+case "${1:-list}" in
+list)
+    list_themes
+    ;;
+current)
+    current_theme
+    ;;
+apply)
+    [[ $# -eq 2 ]] || { usage >&2; exit 1; }
+    apply_theme "$2"
+    ;;
+reset)
+    [[ $# -eq 1 ]] || { usage >&2; exit 1; }
+    reset_theme
+    ;;
+path)
+    [[ $# -eq 2 ]] || { usage >&2; exit 1; }
+    validate_theme "$2"
+    printf '%s\n' "$THEME_DIR/$2.conf"
+    ;;
+help|-h|--help)
+    usage
+    ;;
+*)
+    usage >&2
+    exit 1
+    ;;
+esac

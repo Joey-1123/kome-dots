@@ -119,6 +119,27 @@ if grep -Fq 'background_opacity 0.90' "$ROOT/config/kitty/kitty.conf" \
 else
     fail "Kitty uses a translucent minimal terminal surface"
 fi
+if [[ -x "$ROOT/scripts/kome-kitty-theme" ]] \
+    && [[ -f "$ROOT/config/kitty/theme.conf" ]] \
+    && grep -Fq 'include theme.conf' "$ROOT/config/kitty/kitty.conf" \
+    && find "$ROOT/config/kitty/themes" -maxdepth 1 -type f -name '*.conf' | grep -q .; then
+    pass "Kitty has a local theme library and selector"
+else
+    fail "Kitty has a local theme library and selector"
+fi
+kitty_iso="$(mktemp -d)"
+mkdir -p "$kitty_iso/kitty/themes"
+cp "$ROOT/config/kitty/themes/JetBrains_Darcula.conf" "$kitty_iso/kitty/themes/"
+if XDG_CONFIG_HOME="$kitty_iso" "$ROOT/scripts/kome-kitty-theme" list 2>/dev/null | grep -Fxq 'JetBrains_Darcula' \
+    && XDG_CONFIG_HOME="$kitty_iso" "$ROOT/scripts/kome-kitty-theme" apply JetBrains_Darcula >/dev/null 2>&1 \
+    && [[ "$(XDG_CONFIG_HOME="$kitty_iso" "$ROOT/scripts/kome-kitty-theme" current)" == 'JetBrains_Darcula' ]] \
+    && XDG_CONFIG_HOME="$kitty_iso" "$ROOT/scripts/kome-kitty-theme" reset >/dev/null 2>&1 \
+    && [[ "$(XDG_CONFIG_HOME="$kitty_iso" "$ROOT/scripts/kome-kitty-theme" current)" == 'generated' ]]; then
+    pass "kome-kitty-theme applies and resets a theme"
+else
+    fail "kome-kitty-theme applies and resets a theme"
+fi
+rm -rf "$kitty_iso"
 if grep -Fq 'inner_color = rgba({{colors.surface.default.hex_stripped}}00)' \
     "$ROOT/config/matugen/templates/hyprlock-colors.conf" \
     && grep -Fq 'outer_color = rgba({{colors.on_surface.default.hex_stripped}}aa)' \
