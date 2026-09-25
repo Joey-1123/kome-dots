@@ -10,7 +10,10 @@ Item {
 
     default property alias content: body.data
 
-    Component.onCompleted: body.forceLayout()
+    Component.onCompleted: {
+        body.forceLayout()
+        scroll.contentY = 0
+    }
 
     Flickable {
         id: scroll

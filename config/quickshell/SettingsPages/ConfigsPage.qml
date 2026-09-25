@@ -1,260 +1,65 @@
 import QtQuick
-import QtQuick.Controls
-import Quickshell.Io
 import "../"
 
-Item {
+SettingsPage {
     id: page
 
-    property real marginLeft: 0
-    property real marginRight: 55
-    property real marginTop: 0
-    property real marginBottom: 0
-    property real sliderMarginRight: 10
-    property real sectionSpacing: 6
+    title: "CONFIGS"
+    subtitle: "Open the files that shape your desktop"
+    statusText: service.statusText.toUpperCase()
+    busy: false
 
-    function editConfig(path) {
-        const proc = Qt.createQmlObject(`
-            import Quickshell.Io
-            Process {
-                command: ["sh", "-c", "xed " + ${JSON.stringify(path)}]
-            }
-        `, page)
+    property string searchText: ""
 
-        proc.running = true
+    ConfigService {
+        id: service
     }
 
-    component ConfigButton: Rectangle {
-        required property string label
-        required property string path
-
+    SettingsSearch {
         width: parent.width
-        height: 42
-        radius: Theme.radius
-        color: '#00000000'
-        border.width: 1
-        border.color: Theme.border
+        placeholder: "Search config names or paths"
+        text: page.searchText
+        onTextChanged: page.searchText = text
+    }
 
-        Text {
-            anchors.left: parent.left
-            anchors.leftMargin: 14
-            anchors.verticalCenter: parent.verticalCenter
+    Repeater {
+        id: sectionList
+        model: service.filteredSections(page.searchText)
 
-            text: label
-            color: Theme.textDim
-            font.family: Theme.fontFamily
-            font.pixelSize: 13
-            font.bold: true
-            font.letterSpacing: 2
-        }
+        delegate: SettingsSection {
+            required property var modelData
+            width: parent.width
+            title: modelData.title
+            description: modelData.description
 
-        Row {
-            anchors.right: parent.right
-            anchors.rightMargin: 14
-            anchors.verticalCenter: parent.verticalCenter
+            Repeater {
+                model: modelData.items
 
-            spacing: 8
+                delegate: SettingsRow {
+                    required property var modelData
+                    width: parent.width
+                    label: modelData.label
+                    description: service.pathExists(modelData.path)
+                        ? modelData.path
+                        : modelData.path + " · not installed"
+                    clickable: service.pathExists(modelData.path)
+                    onClicked: service.open(modelData.path)
 
-            Text {
-                text: "\uf120"
-                color: Theme.textDim
-                font.family: Theme.iconFont
-                font.pixelSize: 13
-                anchors.verticalCenter: parent.verticalCenter
+                    StatePill {
+                        text: service.pathExists(modelData.path) ? "OPEN" : "MISSING"
+                        tone: service.pathExists(modelData.path) ? "accent" : "warning"
+                    }
+                }
             }
-
-            Text {
-                text: "EDIT " + path.split("/").pop().toUpperCase()
-                color: Theme.textDim
-                font.family: Theme.fontFamily
-                font.pixelSize: 12
-                font.bold: true
-                font.letterSpacing: 1
-                anchors.verticalCenter: parent.verticalCenter
-            }
-        }
-
-        MouseArea {
-            anchors.fill: parent
-            hoverEnabled: true
-
-            onEntered: {
-                parent.color = Theme.alpha(Theme.accent, 0.08)
-                parent.border.color = Theme.accent
-            }
-
-            onExited: {
-                parent.color = "#00000000"
-                parent.border.color = Theme.border
-            }
-
-            onClicked: page.editConfig(path)
         }
     }
 
-    Flickable {
-        id: flick
-
-        anchors.left: parent.left
-        anchors.right: parent.right
-        anchors.top: parent.top
-        anchors.bottom: parent.bottom
-
-        anchors.leftMargin: page.marginLeft
-        anchors.rightMargin: page.marginRight
-        anchors.topMargin: page.marginTop
-        anchors.bottomMargin: page.marginBottom
-
-        contentWidth: width
-        contentHeight: content.height
-        clip: true
-        boundsBehavior: Flickable.StopAtBounds
-
-        ScrollBar.vertical: ScrollBar {
-            id: scrollBar
-
-            background: Rectangle {
-                color: Theme.alpha(Theme.border, 0.3)
-                radius: width / 2
-            }
-
-            contentItem: Rectangle {
-                color: Theme.accent
-                radius: width / 2
-            }
-        }
-
-        Column {
-            id: content
-
-            width: flick.width
-            spacing: 14
-
-            Text {
-                text: "CONFIGS"
-                color: Theme.text
-                font.family: Theme.fontFamily
-                font.pixelSize: 19
-                font.letterSpacing: 3
-            }
-
-            Rectangle {
-                width: parent.width
-                height: 1
-                color: Theme.border
-            }
-
-            Text {
-                text: "HYPRLAND"
-                color: Theme.text
-                font.family: Theme.fontFamily
-                font.pixelSize: 16
-                font.letterSpacing: 3
-            }
-
-            Rectangle {
-                width: parent.width
-                height: 1
-                color: Theme.border
-            }
-
-            Column {
-                width: parent.width
-                spacing: page.sectionSpacing
-
-                ConfigButton {
-                    label: "PROGRAMS - AUTOSTART - INPUT"
-                    path: "~/.config/hypr/hyprland.lua"
-                }
-
-                ConfigButton {
-                    label: "LOOK AND FEEL"
-                    path: "~/.config/hypr/modules/look.lua"
-                }
-
-                ConfigButton {
-                    label: "KEYBINDS"
-                    path: "~/.config/hypr/modules/binds.lua"
-                }
-
-                ConfigButton {
-                    label: "RULES"
-                    path: "~/.config/hypr/modules/rules.lua"
-                }
-
-                ConfigButton {
-                    label: "MONITORS"
-                    path: "~/.config/hypr/modules/monitors.lua"
-                }
-
-                ConfigButton {
-                    label: "LOCK SCREEN"
-                    path: "~/.config/hypr/hyprlock.conf"
-                }
-
-                ConfigButton {
-                    label: "SETTINGS THEME"
-                    path: "~/.config/quickshell/Theme.qml"
-                }
-            }
-
-            Text {
-                text: "WAYBAR"
-                color: Theme.text
-                font.family: Theme.fontFamily
-                font.pixelSize: 16
-                font.letterSpacing: 3
-            }
-
-            Rectangle {
-                width: parent.width
-                height: 1
-                color: Theme.border
-            }
-
-            Column {
-                width: parent.width
-                spacing: page.sectionSpacing
-
-                ConfigButton {
-                    label: "CONFIG"
-                    path: "~/.config/waybar/config.jsonc"
-                }
-
-                ConfigButton {
-                    label: "STYLE"
-                    path: "~/.config/waybar/style.css"
-                }
-            }
-
-            Text {
-                text: "WLOGOUT"
-                color: Theme.text
-                font.family: Theme.fontFamily
-                font.pixelSize: 16
-                font.letterSpacing: 3
-            }
-
-            Rectangle {
-                width: parent.width
-                height: 1
-                color: Theme.border
-            }
-
-            Column {
-                width: parent.width
-                spacing: page.sectionSpacing
-
-                ConfigButton {
-                    label: "STYLE"
-                    path: "~/.config/wlogout/style.css"
-                }
-
-                ConfigButton {
-                    label: "LAYOUT"
-                    path: "~/.config/wlogout/layout"
-                }
-            }
-        }
+    EmptyState {
+        width: parent.width
+        title: "NO CONFIGS FOUND"
+        message: page.searchText
+            ? "No config matches your search"
+            : "No config launchers are available"
+        visible: service.filteredSections(page.searchText).length === 0
     }
 }

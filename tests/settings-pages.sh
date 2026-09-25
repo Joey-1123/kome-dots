@@ -35,12 +35,18 @@ component_contract SettingsSearch.qml "shared keyboard search field"
 component_contract NetworkHero.qml "shared active network summary"
 component_contract ConfirmDialog.qml "shared confirmation overlay"
 component_contract StorageUsage.qml "shared filesystem usage visualization"
+component_contract ConfigService.qml "shared config launcher service"
 
 if [[ -f "$ROOT/config/quickshell/SettingsPage.qml" ]]; then
     if grep -Fq 'bottomPadding: 18' "$ROOT/config/quickshell/SettingsPage.qml"; then
         pass "shared page reserves bottom scroll space"
     else
         fail "shared page reserves bottom scroll space"
+    fi
+    if grep -Fq 'scroll.contentY = 0' "$ROOT/config/quickshell/SettingsPage.qml"; then
+        pass "shared pages open at their top edge"
+    else
+        fail "shared pages open at their top edge"
     fi
     if grep -Fq 'default property alias content' "$ROOT/config/quickshell/SettingsPage.qml"; then
         pass "shared page exposes a content slot"
@@ -343,6 +349,39 @@ if grep -Fq '"df", "-P"' "$storage_service" \
     pass "Storage service reports filesystems and per-disk usage"
 else
     fail "Storage service reports filesystems and per-disk usage"
+fi
+
+configs_page="$ROOT/config/quickshell/SettingsPages/ConfigsPage.qml"
+config_service="$ROOT/config/quickshell/ConfigService.qml"
+if grep -Fq 'SettingsPage {' "$configs_page" \
+    && grep -Fq 'ConfigService {' "$configs_page" \
+    && [[ "$(wc -l < "$configs_page")" -le 220 ]]; then
+    pass "Configs page uses a compact searchable launcher"
+else
+    fail "Configs page uses a compact searchable launcher"
+fi
+if grep -Fq 'SettingsSearch {' "$configs_page" \
+    && grep -Fq 'title: "HYPRLAND"' "$config_service" \
+    && grep -Fq 'title: "WAYBAR"' "$config_service" \
+    && grep -Fq 'title: "WLOGOUT"' "$config_service" \
+    && grep -Fq 'Repeater {' "$configs_page"; then
+    pass "Configs page groups Hyprland, Waybar, and Wlogout files"
+else
+    fail "Configs page groups Hyprland, Waybar, and Wlogout files"
+fi
+if grep -Fq 'Quickshell.execDetached' "$config_service" \
+    && grep -Fq '"xdg-open"' "$config_service" \
+    && grep -Fq 'function pathExists(path)' "$config_service" \
+    && ! grep -Fq 'xed' "$configs_page" \
+    && ! grep -Fq 'xed' "$config_service"; then
+    pass "Configs service opens resolved files without hardcoded xed"
+else
+    fail "Configs service opens resolved files without hardcoded xed"
+fi
+if grep -Eq 'marginRight|sliderMarginRight|#[0-9a-fA-F]{6,8}' "$configs_page"; then
+    fail "Configs page uses shared layout and semantic tokens"
+else
+    pass "Configs page uses shared layout and semantic tokens"
 fi
 
 if [[ "$FAIL" -eq 0 ]]; then
