@@ -1,67 +1,105 @@
-/* kome — waybar styling. Palette is imported from theme.css (generated). */
-@import "theme.css";
-
+/* General */
 * {
-    font-family: "JetBrainsMono Nerd Font", monospace;
-    font-size: 13px;
+    font-family: "JetBrainsMono Nerd Font", "Symbols Nerd Font Mono", monospace;
+    font-size: 11px;
     min-height: 0;
 }
 
 window#waybar {
-    background: transparent;
-    color: @fg;
+    min-height: 10px;
+    background-color: rgba(20, 20, 20, 0);
+    color: #ffffff;
 }
 
-.modules-left,
-.modules-center,
+/* LEFT */
+.modules-left {
+    background-color: rgba(20, 20, 20, 0.5);
+    border-radius: 10px;
+    margin: 4px 0 2px 6px;
+}
+
+/* CENTER */
+.modules-center {
+    background-color: rgba(20, 20, 20, 0.5);
+    border-radius: 10px;
+    margin: 4px 0 2px;
+}
+
+/* RIGHT */
 .modules-right {
-    background: @surface;
-    border: 1px solid @outline_dim;
-    border-radius: 12px;
-    padding: 0 8px;
+    background-color: rgba(20, 20, 20, 0.5);
+    border-radius: 10px;
+    margin: 4px 6px 2px 0;
 }
 
-#workspaces button {
-    padding: 0 3px;
-    margin: 4px 0;
-    border-radius: 6px;
-    color: @outline_dim;
-    background: transparent;
-    min-width: 16px;
-    text-shadow: none;
+/* Module spacing */
+#cpu,
+#memory,
+#custom-gpu,
+#clock,
+#pulseaudio,
+#custom-mpris-marquee,
+#custom-power,
+#temperature {
+    padding: 0 10px;
+    margin: 0 2px;
 }
 
-#workspaces button.active {
-    color: @bg;
-    background: @primary;
+/* Power */
+#custom-power {
+    color: #ffffff;
+    font-size: 15px;
+    margin-right: 10px;
+}
+
+/* MPRIS */
+#custom-mpris-marquee {
+    padding: 0 10px;
+}
+
+/* Clock */
+#clock {
     font-weight: bold;
 }
 
-#workspaces button.urgent {
-    color: @error;
-    background: transparent;
+/* Temperature */
+#temperature.critical {
+    color: #ff5555;
 }
 
-#clock,
-#pulseaudio,
-#network,
-#battery,
+/* Tooltip */
+tooltip {
+    background-color: rgba(20, 20, 20, 0.4);
+    color: #ffffff;
+    font-weight: bold;
+    border: 1px solid rgba(255, 255, 255, 0);
+    border-radius: 10px;
+}
+
+tooltip label {
+    color: #ffffff;
+    font-size: 13px;
+    padding: 0;
+    margin: 0;
+}
+
+/* Interactive hover effect */
 #cpu,
 #memory,
-#tray {
-    padding: 0 8px;
-    color: @fg;
+#custom-gpu,
+#temperature,
+#clock,
+#pulseaudio,
+#custom-mpris-marquee {
+    transition: font-size 0.15s ease;
 }
 
-#battery.warning {
-    color: @tertiary;
-}
-
-#battery.critical {
-    color: @error;
-}
-
-#tray menu {
-    background: @surface_hi;
-    color: @fg;
+#cpu:hover,
+#memory:hover,
+#custom-gpu:hover,
+#temperature:hover,
+#clock:hover,
+#pulseaudio:hover,
+#custom-mpris-marquee:hover {
+    font-size: 13px;
 }

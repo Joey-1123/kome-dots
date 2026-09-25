@@ -81,6 +81,36 @@ else
     fail "binds.lua has night-light bind"
 fi
 
+# Waybar follows the compact three-group desktop layout.
+waybar_config="$ROOT/config/waybar/config.jsonc"
+waybar_style="$ROOT/config/waybar/style.css"
+if grep -Fq '"modules-left": ["cpu", "custom/gpu", "memory", "temperature"]' "$waybar_config" \
+    && grep -Fq '"modules-center": ["clock"]' "$waybar_config" \
+    && grep -Fq '"modules-right": ["custom/mpris-marquee", "pulseaudio", "custom/power"]' "$waybar_config"; then
+    pass "Waybar uses the compact reference module groups"
+else
+    fail "Waybar uses the compact reference module groups"
+fi
+if grep -Fq 'background-color: rgba(20, 20, 20, 0.5)' "$waybar_style" \
+    && grep -Fq 'border-radius: 10px' "$waybar_style" \
+    && grep -Fq 'font-size: 11px' "$waybar_style"; then
+    pass "Waybar uses the compact reference surface treatment"
+else
+    fail "Waybar uses the compact reference surface treatment"
+fi
+for helper in gpu_usage.sh mpris-marquee.sh playerctl-active.sh toggle-gammastep; do
+    if [[ -x "$ROOT/config/waybar/scripts/$helper" ]]; then
+        pass "Waybar helper $helper is executable"
+    else
+        fail "Waybar helper $helper is executable"
+    fi
+done
+if [[ -f "$ROOT/config/waybar/LICENSE" ]]; then
+    pass "Waybar reference license notice is present"
+else
+    fail "Waybar reference license notice is present"
+fi
+
 # Ported config dirs present.
 for d in btop cava fastfetch shell starship; do
     if [[ -d "$ROOT/config/$d" ]]; then
