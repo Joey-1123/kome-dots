@@ -111,6 +111,7 @@ Then log out and select Hyprland from greetd (or run `Hyprland` from TTY).
 | `SUPER + B` | Browser |
 | `SUPER + X` | Next keyboard layout |
 | `SUPER + slash` | Keybind cheat-sheet |
+| `SUPER + I` | Settings control centre |
 | `SUPER + M` | Toggle game mode |
 | `SUPER + SHIFT + E` | Exit Hyprland |
 | `SUPER + 1-0` | Switch workspace |

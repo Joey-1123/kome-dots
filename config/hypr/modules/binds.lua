@@ -131,6 +131,9 @@ hl.bind(m .. " + code:86",    function() zoomfunction(0.3) end,  { repeating = t
 -- Cheat-sheet ---------------------------------------------------------------
 hl.bind(m .. " + slash", hl.dsp.exec_cmd("kome-keybinds"))
 
+-- Settings control centre (quickshell) -------------------------------------
+hl.bind(m .. " + I", hl.dsp.exec_cmd("qs ipc call settings toggle"))
+
 -- Exit (use hyprshutdown if available) -------------------------------------
 hl.bind(m .. " + SHIFT + E", hl.dsp.exec_cmd("command -v hyprshutdown >/dev/null 2>&1 && hyprshutdown || hyprctl dispatch exit"))
 

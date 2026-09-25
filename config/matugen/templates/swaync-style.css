@@ -5,12 +5,21 @@
     font-size: 13px;
 }
 
+/* Panel window. Swaync ships a hardcoded near-black here, which reads as a
+   mismatched slab against the desktop. Theme it with the active palette. */
+#panel,
+#window {
+    background: {{colors.surface_container_lowest.default.hex}};
+    border: 1px solid {{colors.outline_variant.default.hex}};
+    border-radius: 14px;
+}
+
 .notification-row {
     outline: none;
 }
 
 .notification {
-    background: {{colors.surface.default.hex}};
+    background: {{colors.surface_container.default.hex}};
     border: 1px solid {{colors.outline_variant.default.hex}};
     border-radius: 10px;
     margin: 6px;

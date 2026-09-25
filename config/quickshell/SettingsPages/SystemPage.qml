@@ -496,7 +496,7 @@ Item {
 
                     Image {
                         anchors.centerIn: parent
-                        source: page.homeDir ? "file://" + page.homeDir + "/.config/quickshell/pfp3.png" : ""
+                        source: page.homeDir ? "file://" + page.homeDir + "/.config/quickshell/dino.svg" : ""
                         width: 140
                         height: 140
                         fillMode: Image.PreserveAspectFit

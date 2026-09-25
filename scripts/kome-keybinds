@@ -40,6 +40,7 @@ XF86MonBrightnessUp/Down | Brightness
 SUPER + X | Next keyboard layout
 SUPER + mouse_down/up | Zoom out/in
 SUPER + slash | This cheat-sheet
+SUPER + I | Settings control centre
 SUPER + M | Toggle game mode
 SUPER + SHIFT + E | Exit Hyprland
 XF86AudioRaiseVolume/LowerVolume/Mute | Volume
