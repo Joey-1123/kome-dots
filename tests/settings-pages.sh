@@ -177,6 +177,56 @@ else
     pass "Audio page uses the shared compact layout"
 fi
 
+display_page="$ROOT/config/quickshell/SettingsPages/MonitorsPage.qml"
+display_service="$ROOT/config/quickshell/DisplayService.qml"
+if grep -Fq 'SettingsPage {' "$display_page" \
+    && grep -Fq 'DisplayService {' "$display_page" \
+    && [[ "$(wc -l < "$display_page")" -le 260 ]]; then
+    pass "Display page separates monitor control from its UI"
+else
+    fail "Display page separates monitor control from its UI"
+fi
+if grep -Fq 'availableModes' "$display_page" \
+    && ! grep -Fq '1920x1080' "$display_page"; then
+    pass "Display page uses live monitor modes"
+else
+    fail "Display page uses live monitor modes"
+fi
+if grep -Fq 'monitors[0]' "$display_page"; then
+    fail "Display actions do not target the first monitor implicitly"
+else
+    pass "Display actions do not target the first monitor implicitly"
+fi
+if grep -Fq 'function isCurrentMode(mode)' "$display_page" \
+    && grep -Fq 'parseFloat(rate)' "$display_page"; then
+    pass "Display selects exactly one live refresh mode"
+else
+    fail "Display selects exactly one live refresh mode"
+fi
+if grep -Fq 'selectedMonitor' "$display_page" \
+    && [[ "$(grep -Fc 'SettingsSection {' "$display_page")" -ge 4 ]]; then
+    pass "Display page exposes selection, mode, layout, and comfort controls"
+else
+    fail "Display page exposes selection, mode, layout, and comfort controls"
+fi
+if grep -Fq 'hl.monitor' "$display_service" \
+    && grep -Fq 'Quickshell' "$display_service"; then
+    pass "Display service uses the Hyprland Lua monitor API"
+else
+    fail "Display service uses the Hyprland Lua monitor API"
+fi
+if grep -Fq 'page.selectedMonitor ? page.selectedMonitor.mirrorOf' "$display_page"; then
+    pass "Display mirror text is null-safe"
+else
+    fail "Display mirror text is null-safe"
+fi
+if grep -Fq 'id: nightlightLoad' "$display_service" \
+    && ! grep -Fq 'FileView {' "$display_service"; then
+    pass "Display night-light persistence avoids missing-file warnings"
+else
+    fail "Display night-light persistence avoids missing-file warnings"
+fi
+
 if [[ "$FAIL" -eq 0 ]]; then
     echo "=== settings-pages: all pass ==="
 else
