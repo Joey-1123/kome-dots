@@ -104,6 +104,50 @@ if grep -Fq '"on-click": "pavucontrol"' "$waybar_config" \
 else
     fail "Waybar click actions do not repurpose temperature clicks"
 fi
+
+# Application shells share a transparent, minimal surface treatment.
+if grep -Eq 'bg:[[:space:]]+\{\{colors\.background\.default\.hex\}\}e6;' \
+    "$ROOT/config/matugen/templates/rofi-colors.rasi" \
+    && grep -Fq 'bg-selected: @primary-container;' "$ROOT/config/rofi/config.rasi"; then
+    pass "Rofi uses a translucent generated surface and selection"
+else
+    fail "Rofi uses a translucent generated surface and selection"
+fi
+if grep -Fq 'background_opacity 0.90' "$ROOT/config/kitty/kitty.conf" \
+    && grep -Fq 'dynamic_background_opacity yes' "$ROOT/config/kitty/kitty.conf"; then
+    pass "Kitty uses a translucent minimal terminal surface"
+else
+    fail "Kitty uses a translucent minimal terminal surface"
+fi
+if grep -Fq 'inner_color = rgba({{colors.surface.default.hex_stripped}}00)' \
+    "$ROOT/config/matugen/templates/hyprlock-colors.conf" \
+    && grep -Fq 'outer_color = rgba({{colors.on_surface.default.hex_stripped}}aa)' \
+    "$ROOT/config/matugen/templates/hyprlock-colors.conf"; then
+    pass "Hyprlock keeps its input surface transparent"
+else
+    fail "Hyprlock keeps its input surface transparent"
+fi
+if grep -Fq 'background-color: rgba(12, 12, 12, 0.2)' "$ROOT/config/wlogout/style.css" \
+    && grep -Fq 'border-radius: 50%' "$ROOT/config/wlogout/style.css" \
+    && [[ -f "$ROOT/config/wlogout/layout" ]]; then
+    pass "Wlogout uses a minimal translucent circular layout"
+else
+    fail "Wlogout uses a minimal translucent circular layout"
+fi
+if grep -Fq 'orientation: ListView.Horizontal' \
+    "$ROOT/config/quickshell/hyprquickpaper/shell.qml" \
+    && ! grep -Fq 'color: "#C4000000"' \
+    "$ROOT/config/quickshell/hyprquickpaper/shell.qml"; then
+    pass "Wallpaper picker uses a transparent horizontal filmstrip"
+else
+    fail "Wallpaper picker uses a transparent horizontal filmstrip"
+fi
+if grep -Fq 'Theme.alpha(Theme.bg,' "$ROOT/config/quickshell/SettingsWindow.qml" \
+    && grep -Fq 'Theme.alpha(Theme.bgCard' "$ROOT/config/quickshell/SettingsSection.qml"; then
+    pass "Kome system panel uses a translucent application surface"
+else
+    fail "Kome system panel uses a translucent application surface"
+fi
 for helper in gpu_usage.sh mpris-marquee.sh playerctl-active.sh toggle-gammastep; do
     if [[ -x "$ROOT/config/waybar/scripts/$helper" ]]; then
         pass "Waybar helper $helper is executable"

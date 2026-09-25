@@ -12,7 +12,7 @@ Rectangle {
 
     height: 222
     radius: Theme.radius
-    color: Theme.bgCard
+    color: Theme.alpha(Theme.bgCard, 0.94)
     border.width: 1
     border.color: Theme.border
 

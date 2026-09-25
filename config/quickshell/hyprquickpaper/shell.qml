@@ -1,36 +1,43 @@
 import Quickshell
 import Quickshell.Io
 import QtQuick
+import QtQuick.Effects
 import Qt.labs.folderlistmodel
 import Quickshell.Wayland
 
 PanelWindow {
     id: main
 
-    // ---- Settings ----
-    // Wallpaper to preselect when the rail opens.
-    property int startPosition: 0
-
-    // Resolved once, used to expand relative paths from config.json
+    property int speed: 5000
+    property int animDuration: 1000
+    property real zoomScale: 0.8
+    property real edgeScale: 0.3
+    property real skewFactor: 0
+    property real baseSpacing: 0
+    property real edgeSpacing: 80
+    property int startPosition: 4
+    property bool shadowEnabled: true
+    property color shadowColor: "#000000"
+    property real shadowOpacity: 0.4
+    property real shadowBlur: 0.45
+    property real shadowX: 6
+    property real shadowY: 6
     readonly property string homeDir: Quickshell.env("HOME")
 
-    // Full-screen overlay: dimmed backdrop, vertical rail on the left,
-    // large hover preview filling the rest.
     implicitHeight: Screen.height
     implicitWidth: Screen.width
-    color: "#C4000000"
+    color: "transparent"
     aboveWindows: true
     exclusionMode: "Ignore"
-    exclusiveZone: -1
+    exclusiveZone: 1
     WlrLayershell.layer: WlrLayer.Overlay
     WlrLayershell.keyboardFocus: WlrKeyboardFocus.Exclusive
 
-    Component.onCompleted:
-        Quickshell.execDetached([
-            "bash",
-            Quickshell.shellPath("cache.sh"),
-            Quickshell.shellDir
-        ])
+    Component.onCompleted: Quickshell.execDetached([
+        "bash",
+        Quickshell.shellPath("cache.sh"),
+        Quickshell.shellDir
+    ])
 
     FileView {
         path: Quickshell.shellPath("config.json")
@@ -46,74 +53,68 @@ PanelWindow {
         }
     }
 
+    readonly property string wallpaperPath: {
+        const value = configs.wallpaper_path || ""
+        return value.indexOf("/") === 0 ? value : main.homeDir + "/" + value
+    }
+    readonly property string cachePath: {
+        const value = configs.cache_path || ""
+        return value.indexOf("/") === 0 ? value : main.homeDir + "/" + value
+    }
+
     FolderListModel {
         id: folderModel
-        folder: "file://" + main.homeDir + "/" + configs.wallpaper_path
+        folder: "file://" + main.wallpaperPath
         showDirs: false
         nameFilters: ["*.png", "*.jpg", "*.jpeg", "*.webp"]
         sortField: FolderListModel.Name
     }
 
-    // Hover preview — the full-resolution wallpaper, so the user sees the
-    // real thing before applying it.
-    Image {
-        id: preview
-        anchors.left: rail.right
-        anchors.leftMargin: 48
-        anchors.right: parent.right
-        anchors.rightMargin: 48
-        anchors.top: parent.top
-        anchors.bottom: parent.bottom
-        anchors.bottomMargin: 48
-        fillMode: Image.PreserveAspectFit
-        asynchronous: true
-        smooth: true
-        visible: source != ""
-        source: rail.hoverIndex >= 0 && rail.hoverIndex < folderModel.count
-                ? folderModel.get(rail.hoverIndex, "filePath")
-                : ""
+    MouseArea {
+        id: outsideClickArea
+        anchors.fill: parent
+        z: 0
+        onClicked: Qt.quit()
     }
 
-    Text {
-        anchors.centerIn: preview
-        visible: preview.source === ""
-        text: folderModel.count === 0 ? "No wallpapers found" : "Hover a wallpaper to preview"
-        color: "#88ffffff"
-        font.pixelSize: 22
-    }
-
-    // Vertical thumbnail rail on the left edge.
     ListView {
-        id: rail
-        anchors.left: parent.left
-        anchors.leftMargin: 28
+        id: list
+        width: parent.width
+        height: 500
+        anchors.horizontalCenter: parent.horizontalCenter
         anchors.verticalCenter: parent.verticalCenter
-        width: 190
-        height: Math.min(parent.height - 80,
-                         Math.max(count, 1) * (tileHeight + spacing))
+        z: 1
         focus: true
         model: folderModel
-        orientation: ListView.Vertical
-        spacing: 10
+        orientation: ListView.Horizontal
+        spacing: 0
         clip: true
+        cacheBuffer: 400
         boundsBehavior: Flickable.StopAtBounds
 
-        readonly property real tileHeight: 108
-        property int selectedIndex: 0
-        // Index the pointer is over; -1 until the model loads.
-        property int hoverIndex: -1
+        property int selectedIndex: main.startPosition
+        readonly property real tileWidth: width / Math.max(1, configs.number_of_pictures) - 10
+        readonly property real viewportCenterX: width / 2
+        readonly property real step: tileWidth + main.baseSpacing
+        readonly property real sideMargin: Math.max(0, viewportCenterX - tileWidth / 2)
+        property bool ready: false
+        property bool userMoved: false
 
-        onCountChanged: {
-            if (count > 0) {
-                selectedIndex = Math.max(0, Math.min(main.startPosition, count - 1))
-                hoverIndex = selectedIndex
-                positionViewAtIndex(selectedIndex, ListView.Contain)
-            }
+        leftMargin: sideMargin
+        rightMargin: sideMargin
+
+        function clampIndex(i) { return Math.max(0, Math.min(count - 1, i)) }
+        function ensureVisibleAnimated(i) { contentX = i * step }
+
+        function centerOnStart() {
+            if (userMoved || count <= 0 || configs.number_of_pictures <= 0) return
+            selectedIndex = clampIndex(main.startPosition)
+            contentX = selectedIndex * step
+            ready = true
         }
 
         function activateCurrent() {
-            if (selectedIndex < 0 || selectedIndex >= count)
-                return
+            if (selectedIndex < 0 || selectedIndex >= count) return
             Quickshell.execDetached([
                 "bash",
                 Quickshell.shellPath("commands.sh"),
@@ -122,57 +123,145 @@ PanelWindow {
             Qt.quit()
         }
 
+        function moveSelection(delta, speedMultiplier) {
+            anim.velocity = main.speed * speedMultiplier
+            selectedIndex = clampIndex(selectedIndex + delta)
+            ensureVisibleAnimated(selectedIndex)
+        }
+
+        onCountChanged: centerOnStart()
+        onWidthChanged: centerOnStart()
+
+        Connections {
+            target: configs
+            function onNumber_of_picturesChanged() { list.centerOnStart() }
+        }
+
+        Behavior on contentX {
+            enabled: list.ready
+            SmoothedAnimation {
+                id: anim
+                property real velocity: main.speed
+                duration: main.animDuration
+            }
+        }
+
         delegate: Item {
-            id: tile
-            width: rail.width
-            height: rail.tileHeight
+            id: delegateItem
+            width: list.tileWidth
+            height: 500
 
-            readonly property bool active: index === rail.selectedIndex
-
-            Rectangle {
-                anchors.fill: parent
-                radius: 8
-                color: "#33000000"
-                border.width: tile.active ? 3 : 1
-                border.color: tile.active ? configs.border_color : "#33ffffff"
+            property bool active: index === list.selectedIndex
+            readonly property real baseWidth: list.tileWidth
+            readonly property real baseCenterX: x - list.contentX + baseWidth / 2
+            readonly property real distance: Math.abs(baseCenterX - list.viewportCenterX)
+            readonly property real fraction: Math.min(1, distance / list.viewportCenterX)
+            readonly property real compression: {
+                const t = fraction
+                return t * t * t * t
+            }
+            readonly property real edgeOffset: {
+                const amount = main.edgeSpacing * compression
+                return baseCenterX < list.viewportCenterX ? amount : -amount
+            }
+            readonly property real scaleFactor: {
+                const t = 1 - fraction * fraction * (3 - 2 * fraction)
+                return main.edgeScale + (main.zoomScale - main.edgeScale) * t
             }
 
-            Image {
-                id: thumb
-                anchors.fill: parent
-                anchors.margins: 4
-                fillMode: Image.PreserveAspectCrop
-                asynchronous: true
-                smooth: true
-                // Join explicitly: config paths carry no trailing slash, and
-                // concatenating without one yields ".../thumbs01.png".
-                source: "file://" +
-                        main.homeDir + "/" +
-                        configs.cache_path.replace(/\/+$/, "") + "/" +
-                        fileName
-            }
+            Item {
+                id: content
+                anchors.verticalCenter: parent.verticalCenter
+                width: delegateItem.baseWidth * delegateItem.scaleFactor
+                height: delegateItem.height * Math.min(1, delegateItem.scaleFactor)
+                x: (delegateItem.baseWidth - width) / 2 + delegateItem.edgeOffset
 
-            Text {
-                anchors.centerIn: parent
-                visible: thumb.status === Image.Error || thumb.status === Image.Loading
-                text: "…"
-                color: "#88ffffff"
-                font.pixelSize: 18
+                Image {
+                    id: shadowImage
+                    x: main.shadowX
+                    y: main.shadowY
+                    width: parent.width
+                    height: parent.height
+                    source: img.source
+                    sourceSize.width: img.sourceSize.width
+                    sourceSize.height: img.sourceSize.height
+                    fillMode: Image.PreserveAspectCrop
+                    asynchronous: true
+                    cache: false
+                    smooth: true
+                    visible: main.shadowEnabled
+                    opacity: main.shadowOpacity
+                    layer.enabled: true
+                    layer.effect: MultiEffect {
+                        brightness: -1
+                        blurEnabled: true
+                        blur: main.shadowBlur
+                    }
+                    transform: Shear { xFactor: main.skewFactor }
+                }
+
+                Text {
+                    id: alt
+                    text: ""
+                    color: configs.border_color
+                    anchors.centerIn: parent
+                    font.pixelSize: 16
+                    transform: Shear { xFactor: main.skewFactor }
+                }
+
+                Image {
+                    id: img
+                    anchors.fill: parent
+                    opacity: 0.8
+                    fillMode: Image.PreserveAspectCrop
+                    asynchronous: true
+                    cache: false
+                    smooth: true
+                    source: "file://" + main.cachePath.replace(/\/+$/, "") + "/" + fileName
+                    sourceSize.width: delegateItem.baseWidth * main.zoomScale
+                    sourceSize.height: delegateItem.height
+                    transform: Shear { xFactor: main.skewFactor }
+
+                    Timer {
+                        id: retryTimer
+                        interval: 1000
+                        repeat: false
+                        onTriggered: {
+                            const source = img.source
+                            img.source = ""
+                            img.source = source
+                        }
+                    }
+
+                    onStatusChanged: {
+                        if (status === Image.Error) {
+                            alt.text = "Caching"
+                            retryTimer.start()
+                        }
+                    }
+                }
+
+                Rectangle {
+                    z: 10
+                    anchors.fill: parent
+                    visible: delegateItem.active
+                    color: "transparent"
+                    border.width: 2
+                    border.color: configs.border_color
+                    transform: Shear { xFactor: main.skewFactor }
+                }
             }
 
             MouseArea {
                 anchors.fill: parent
-                hoverEnabled: true
-
+                hoverEnabled: list.ready
                 onEntered: {
-                    rail.hoverIndex = index
-                    rail.selectedIndex = index
+                    list.userMoved = true
+                    list.selectedIndex = index
                 }
-
-                onClicked: rail.activateCurrent()
-
+                onClicked: list.activateCurrent()
                 onWheel: function(wheel) {
-                    rail.flick(0, -wheel.angleDelta.y * 8)
+                    list.flick(-wheel.angleDelta.y * 8, 0)
                     wheel.accepted = true
                 }
             }
@@ -181,23 +270,19 @@ PanelWindow {
         Keys.onPressed: function(event) {
             switch (event.key) {
             case Qt.Key_Space:
-            case Qt.Key_Return:
-            case Qt.Key_Enter:
                 activateCurrent()
                 break
             case Qt.Key_W:
             case Qt.Key_Escape:
                 Qt.quit()
                 break
-            case Qt.Key_Down:
-                rail.selectedIndex = Math.min(rail.selectedIndex + 1, count - 1)
-                rail.hoverIndex = rail.selectedIndex
-                rail.positionViewAtIndex(rail.selectedIndex, ListView.Contain)
+            case Qt.Key_A:
+                userMoved = true
+                moveSelection(-1, 1)
                 break
-            case Qt.Key_Up:
-                rail.selectedIndex = Math.max(rail.selectedIndex - 1, 0)
-                rail.hoverIndex = rail.selectedIndex
-                rail.positionViewAtIndex(rail.selectedIndex, ListView.Contain)
+            case Qt.Key_D:
+                userMoved = true
+                moveSelection(1, 1)
                 break
             default:
                 return

@@ -146,7 +146,7 @@ PanelWindow {
         Rectangle {
             anchors.fill: parent
 
-            color: Theme.bg
+            color: Theme.alpha(Theme.bg, 0.95)
             radius: 6
 
             border.color: Theme.accent

@@ -1,0 +1,30 @@
+{
+    "label": "shutdown",
+    "action": "systemctl poweroff",
+    "text": "󰐥",
+    "keybind": "s"
+}
+{
+    "label": "reboot",
+    "action": "systemctl reboot",
+    "text": "󰑓",
+    "keybind": "r"
+}
+{
+    "label": "suspend",
+    "action": "systemctl suspend",
+    "text": "󰤓",
+    "keybind": "z"
+}
+{
+    "label": "logout",
+    "action": "hyprctl dispatch 'hl.dsp.exit()'",
+    "text": "󰗽",
+    "keybind": "e"
+}
+{
+    "label": "hibernate",
+    "action": "systemctl hibernate",
+    "text": "󰭁",
+    "keybind": "h"
+}
