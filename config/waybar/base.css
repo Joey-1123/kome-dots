@@ -1,0 +1,100 @@
+/* kome — base bar rules. Loaded by style.css before the theme override, so a
+   vendored theme can restyle any of this. Colors come from the generated palette
+   (theme.css), which keeps the bar in step with light and dark mode. */
+
+/* General */
+* {
+    font-family: "JetBrainsMono Nerd Font", "Symbols Nerd Font Mono", monospace;
+    font-size: 11px;
+    min-height: 0;
+}
+
+window#waybar {
+    min-height: 10px;
+    background-color: transparent;
+    color: @fg;
+}
+
+/* Module groups */
+.modules-left,
+.modules-center,
+.modules-right {
+    background-color: alpha(@surface, 0.55);
+    border-radius: 10px;
+    margin: 4px 0 2px;
+}
+
+.modules-left {
+    margin-left: 6px;
+}
+
+.modules-right {
+    margin-right: 6px;
+}
+
+/* Module spacing */
+#cpu,
+#memory,
+#custom-gpu,
+#clock,
+#pulseaudio,
+#custom-mpris-marquee,
+#custom-power,
+#temperature {
+    padding: 0 10px;
+    margin: 0 2px;
+}
+
+/* Power */
+#custom-power {
+    color: @fg;
+    font-size: 15px;
+    margin-right: 10px;
+}
+
+/* Clock */
+#clock {
+    font-weight: bold;
+}
+
+/* Temperature */
+#temperature.critical {
+    color: @error;
+}
+
+/* Tooltip */
+tooltip {
+    background-color: alpha(@surface_hi, 0.92);
+    color: @fg;
+    font-weight: bold;
+    border: 1px solid alpha(@fg, 0);
+    border-radius: 10px;
+}
+
+tooltip label {
+    color: @fg;
+    font-size: 13px;
+    padding: 0;
+    margin: 0;
+}
+
+/* Interactive hover effect */
+#cpu,
+#memory,
+#custom-gpu,
+#temperature,
+#clock,
+#pulseaudio,
+#custom-mpris-marquee {
+    transition: font-size 0.15s ease;
+}
+
+#cpu:hover,
+#memory:hover,
+#custom-gpu:hover,
+#temperature:hover,
+#clock:hover,
+#pulseaudio:hover,
+#custom-mpris-marquee:hover {
+    font-size: 13px;
+}

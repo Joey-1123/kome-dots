@@ -180,10 +180,11 @@ Bright Lights default.
 The bar's colours come from the same generated palette, so it follows light and
 dark mode. `config/waybar/bar-theme.css` is the override slot: it ships empty
 (the verified kome surface) and `kome-bar-theme` swaps in one of the vendored
-sheets in `config/waybar/themes`, adapted from HANCORE's MIT-licensed
-waybar-themes (island pills, flat underline, outlined groups). The **Configs**
-page lists them with a preview swatch, and the bar reloads over SIGUSR2 — no
-restart, no flicker.
+sheets in `config/waybar/themes`, taken from HANCORE's MIT-licensed
+waybar-themes. Each sheet is upstream as shipped, minus the omarchy palette
+import (replaced by aliases onto the generated palette) and the omarchy menu
+selectors. The **Configs** page lists them with a preview swatch, and the bar
+reloads over SIGUSR2 — no restart, no flicker.
 
 ```bash
 kome-bar-theme list              # available themes

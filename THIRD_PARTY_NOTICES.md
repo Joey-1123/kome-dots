@@ -35,9 +35,13 @@ Copyright (c) 2019 Fabrizio Destro <fabrizio@destro.dev>
 
 ## Waybar Theme Library
 
-`config/waybar/themes/*.css` adapt bar themes from the MIT-licensed
-waybar-themes collection. Each adaptation drops the upstream Omarchy colour
-import and module selectors and restyles kome's own module groups; the upstream
-notice is kept at `config/waybar/themes/LICENSE.md`.
+`config/waybar/themes/*.css` are vendored from the MIT-licensed waybar-themes
+collection. Each sheet is upstream verbatim apart from three edits: the
+`@import "../omarchy/current/theme/waybar.css"` line is replaced by
+`@define-color background @bg;` and `@define-color foreground @fg;` so the
+themes follow the generated kome palette, and selectors naming the omarchy menu
+module (`custom-omarchy*`) are removed. The upstream notice is kept at
+`config/waybar/themes/LICENSE.md`; `scripts/strip-omarchy-css.py` performs the
+selector removal when the library is refreshed.
 
 Copyright (c) 2025 drdeltree

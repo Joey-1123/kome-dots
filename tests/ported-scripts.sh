@@ -84,6 +84,7 @@ fi
 # Waybar follows the compact three-group desktop layout.
 waybar_config="$ROOT/config/waybar/config.jsonc"
 waybar_style="$ROOT/config/waybar/style.css"
+waybar_base="$ROOT/config/waybar/base.css"
 if grep -Fq '"modules-left": ["cpu", "custom/gpu", "memory", "temperature"]' "$waybar_config" \
     && grep -Fq '"modules-center": ["clock"]' "$waybar_config" \
     && grep -Fq '"modules-right": ["custom/mpris-marquee", "pulseaudio", "custom/power"]' "$waybar_config"; then
@@ -92,20 +93,33 @@ else
     fail "Waybar uses the compact reference module groups"
 fi
 if grep -Fq '@import "theme.css"' "$waybar_style" \
+    && grep -Fq '@import "base.css"' "$waybar_style" \
     && grep -Fq '@import "bar-theme.css"' "$waybar_style" \
-    && ! grep -Eq '#[0-9a-fA-F]{3,8}\b|rgba\(20, 20, 20' "$waybar_style" \
-    && grep -Fq 'alpha(@surface' "$waybar_style"; then
+    && ! grep -Eq '#[0-9a-fA-F]{3,8}\b|rgba\(20, 20, 20' "$waybar_base" \
+    && grep -Fq 'alpha(@surface' "$waybar_base"; then
     pass "Waybar style runs on generated tokens with a theme override slot"
 else
     fail "Waybar style runs on generated tokens with a theme override slot"
 fi
+if grep -n '@import' "$waybar_style" | sed -n '3p' | grep -Fq 'bar-theme.css'; then
+    pass "Waybar imports the theme override after the base rules"
+else
+    fail "Waybar imports the theme override after the base rules"
+fi
 if [[ -x "$ROOT/scripts/kome-bar-theme" ]] \
     && [[ -f "$ROOT/config/waybar/bar-theme.css" ]] \
-    && [[ "$(find "$ROOT/config/waybar/themes" -maxdepth 1 -type f -name '*.css' | wc -l)" -ge 6 ]] \
+    && [[ "$(find "$ROOT/config/waybar/themes" -maxdepth 1 -type f -name '*.css' | wc -l)" -ge 9 ]] \
     && grep -Fq 'MIT' "$ROOT/config/waybar/themes/LICENSE.md"; then
     pass "Waybar has a local theme library and selector"
 else
     fail "Waybar has a local theme library and selector"
+fi
+if ! grep -lq 'custom-omarchy' "$ROOT"/config/waybar/themes/*.css 2>/dev/null \
+    && ! grep -lq 'omarchy/current/theme' "$ROOT"/config/waybar/themes/*.css 2>/dev/null \
+    && [[ "$(grep -l 'Vendored from HANCORE-linux/waybar-themes' "$ROOT"/config/waybar/themes/*.css | wc -l)" -ge 9 ]]; then
+    pass "Vendored bar themes keep upstream rules and drop the omarchy bits"
+else
+    fail "Vendored bar themes keep upstream rules and drop the omarchy bits"
 fi
 bar_iso="$(mktemp -d)"
 mkdir -p "$bar_iso/waybar/themes"
