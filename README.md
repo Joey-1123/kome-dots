@@ -178,25 +178,40 @@ Bright Lights default.
 ### Bar themes
 
 The bar's colours come from the same generated palette, so it follows light and
-dark mode. `config/waybar/bar-theme.css` is the override slot: it ships empty
-(the verified kome surface) and `kome-bar-theme` swaps in one of the vendored
-sheets in `config/waybar/themes`, taken from HANCORE's MIT-licensed
-waybar-themes. Each sheet is upstream as shipped, minus the omarchy palette
-import (replaced by aliases onto the generated palette) and the omarchy menu
-selectors. The **Configs** page lists them with a preview swatch, and the bar
-reloads over SIGUSR2 — no restart, no flicker.
+dark mode. `config/waybar/bar-theme.css` and `config.jsonc` are the slots: they
+ship as kome's verified bar, and `kome-bar-theme` swaps in a theme — a
+stylesheet *and* a module layout — from `config/waybar/themes`, taken from
+HANCORE's MIT-licensed waybar-themes. Each sheet is upstream as shipped, minus
+the omarchy palette import (replaced by aliases onto the generated palette) and
+the omarchy menu selectors; each layout is upstream's module list, order,
+heights, and formats, minus the omarchy-only modules, with omarchy click
+handlers rewritten to the kome script that does the same job. So selecting
+V3.7 really does give you its workspace island, its clock-plus-date pill, and
+its tray/mpris/status groups — not just its colours. The **Configs** page lists
+them with a preview swatch, and the bar reloads over SIGUSR2 — no restart, no
+flicker.
+
+Some themes want two extra packages (weather and Arch update count). They are
+guarded with `exec-if`, so their modules stay hidden until installed:
+
+```bash
+yay -S wttrbar waybar-module-pacman-updates-git
+```
 
 ```bash
 kome-bar-theme list              # available themes
-kome-bar-theme list --json       # name plus palette and accent
+kome-bar-theme list --json       # name, palette, accent, and package needs
 kome-bar-theme current           # kome | <theme>
-kome-bar-theme apply V7_2b       # switch theme
+kome-bar-theme apply V7_1a       # switch theme and layout
+kome-bar-theme needs V7_1a       # packages this theme still wants
 kome-bar-theme reset             # back to the kome bar
 ```
 
-Adding a sheet to `config/waybar/themes/` is enough for it to appear in the
-picker; a `kome-bar-theme: accent=#rrggbb` comment in the header supplies the
-swatch colour.
+Adding a sheet and a layout to `config/waybar/themes/` is enough for a theme to
+appear in the picker; a `kome-bar-theme: accent=#rrggbb` comment in the sheet
+header supplies the swatch colour, and `kome-bar-theme: needs=a,b` in the layout
+header drives the package warning. `scripts/build-bar-layouts.py` regenerates the
+layouts from upstream and `scripts/strip-omarchy-css.py` refreshes the sheets.
 
 ## Provider Overrides
 

@@ -36,12 +36,18 @@ Copyright (c) 2019 Fabrizio Destro <fabrizio@destro.dev>
 ## Waybar Theme Library
 
 `config/waybar/themes/*.css` are vendored from the MIT-licensed waybar-themes
-collection. Each sheet is upstream verbatim apart from three edits: the
-`@import "../omarchy/current/theme/waybar.css"` line is replaced by
-`@define-color background @bg;` and `@define-color foreground @fg;` so the
-themes follow the generated kome palette, and selectors naming the omarchy menu
-module (`custom-omarchy*`) are removed. The upstream notice is kept at
-`config/waybar/themes/LICENSE.md`; `scripts/strip-omarchy-css.py` performs the
-selector removal when the library is refreshed.
+collection, and `config/waybar/themes/*.jsonc` are layouts generated from the
+same collection's configs by `scripts/build-bar-layouts.py`. For the stylesheets
+the only edits are: the `@import "../omarchy/current/theme/waybar.css"` line is
+replaced by `@define-color background @bg;` and `@define-color foreground @fg;`
+so the themes follow the generated kome palette, and selectors naming the
+omarchy menu module (`custom-omarchy*`) are removed by
+`scripts/strip-omarchy-css.py`. For the layouts the module list, order, heights,
+margins, formats, and tooltips are upstream; omarchy-only modules are dropped,
+omarchy click handlers are rewritten to the equivalent kome script, and the
+modules needing `wttrbar` or `waybar-module-pacman-updates` get an `exec-if`
+guard. `config/waybar/scrolling-mpris.py` is V7.2b's scrolling MPRIS script,
+credited to Mezutelni in the upstream README. The upstream notice is kept at
+`config/waybar/themes/LICENSE.md`.
 
 Copyright (c) 2025 drdeltree

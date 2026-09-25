@@ -1,0 +1,235 @@
+/* kome layout generated from waybar-themes V4.4 (MIT), drdeltree.
+ * Upstream module list, order, and formatting are kept; omarchy-only
+ * modules and click handlers are replaced or dropped, and the modules that
+ * need wttrbar or waybar-module-pacman-updates get an exec-if guard so the
+ * bar stays clean until those packages are installed. Rebuild with
+ * scripts/build-bar-layouts.py. See THIRD_PARTY_NOTICES.md.
+ * kome-bar-theme: needs=waybar-module-pacman-updates,wttrbar */
+{
+    "reload_style_on_change": true,
+    "layer": "top",
+    "position": "top",
+    "mod": "dock",
+    "margin-top": 1,
+    "height": 25,
+    "margin-bottom": 0,
+    "modules-left": [
+        "hyprland/workspaces",
+        "idle_inhibitor",
+        "custom/screenrecording-indicator",
+        "custom/updatespacman"
+    ],
+    "modules-center": [
+        "mpris",
+        "clock",
+        "custom/weather"
+    ],
+    "modules-right": [
+        "group/tray-expander",
+        "backlight",
+        "bluetooth",
+        "pulseaudio",
+        "network",
+        "cpu",
+        "battery"
+    ],
+    "hyprland/workspaces": {
+        "on-click": "activate",
+        "format": "{icon}",
+        "format-icons": {
+            "1": "1",
+            "2": "2",
+            "3": "3",
+            "4": "4",
+            "5": "5",
+            "6": "6",
+            "7": "7",
+            "8": "8",
+            "9": "9",
+            "10": "10"
+        },
+        "persistent-workspaces": {
+            "1": [],
+            "2": [],
+            "3": [],
+            "4": [],
+            "5": []
+        }
+    },
+    "custom/updatespacman": {
+        "format": "{icon}",
+        "return-type": "json",
+        "format-icons": {
+            "has-updates": "󰏖",
+            "updated": "󰂪"
+        },
+        "exec-if": "which waybar-module-pacman-updates",
+        "exec": "waybar-module-pacman-updates --interval-seconds 5 --network-interval-seconds 300"
+    },
+    "cpu": {
+        "interval": 5,
+        "format": "{usage}% 󰍛"
+    },
+    "clock": {
+        "format": "{:%H:%M %a}",
+        "format-alt": "{:%d/%m/%Y  %H:%M:%S}",
+        "tooltip-format": "<span>{calendar}</span>",
+        "calendar": {
+            "mode": "month",
+            "weeks-pos": "right",
+            "mode-mon-col": 3,
+            "on-click-right": "mode",
+            "format": {
+                "month": "<span color='#ffead3'><b>{}</b></span>",
+                "weekdays": "<span color='#ffcc66'><b>{}</b></span>",
+                "today": "<span color='#ff6699'><b>{}</b></span>"
+            }
+        }
+    },
+    "idle_inhibitor": {
+        "format": "{icon}",
+        "format-icons": {
+            "activated": "",
+            "deactivated": ""
+        }
+    },
+    "network": {
+        "format-icons": [
+            "󰤯",
+            "󰤟",
+            "󰤢",
+            "󰤥",
+            "󰤨"
+        ],
+        "format": "{icon}",
+        "format-wifi": "{icon}",
+        "format-ethernet": "󰀂",
+        "format-disconnected": "󰖪",
+        "tooltip-format-wifi": "{essid} ({frequency} GHz)\n⇣{bandwidthDownBytes}  ⇡{bandwidthUpBytes}",
+        "tooltip-format-ethernet": "⇣{bandwidthDownBytes}  ⇡{bandwidthUpBytes}",
+        "tooltip-format-disconnected": "Disconnected",
+        "interval": 3,
+        "nospacing": 1,
+        "on-click": "kitty"
+    },
+    "battery": {
+        "format": "{capacity}% {icon}",
+        "format-discharging": "{capacity}% {icon}",
+        "format-charging": "{icon}",
+        "format-plugged": "{power}",
+        "format-icons": {
+            "charging": [
+                "󰢜",
+                "󰂆",
+                "󰂇",
+                "󰂈",
+                "󰢝",
+                "󰂉",
+                "󰢞",
+                "󰂊",
+                "󰂋",
+                "󰂅"
+            ],
+            "default": [
+                "󰁺",
+                "󰁻",
+                "󰁼",
+                "󰁽",
+                "󰁾",
+                "󰁿",
+                "󰂀",
+                "󰂁",
+                "󰂂",
+                "󰁹"
+            ]
+        },
+        "format-full": "󰂅",
+        "tooltip-format-discharging": "{power:>1.0f}W↓ {capacity}%",
+        "tooltip-format-charging": "{power:>1.0f}W↑ {capacity}%",
+        "interval": 5,
+        "states": {
+            "warning": 20,
+            "critical": 10
+        }
+    },
+    "bluetooth": {
+        "format": "",
+        "format-disabled": "󰂲",
+        "format-off": "󰂲",
+        "format-connected": "",
+        "tooltip-format": "Devices connected: {num_connections}",
+        "on-click": "blueman-manager"
+    },
+    "backlight": {
+        "device": "intel_backlight",
+        "format": "{percent}% {icon}",
+        "format-icons": [
+            "🌑",
+            "🌘",
+            "🌗",
+            "🌖",
+            "🌕"
+        ]
+    },
+    "custom/weather": {
+        "format": "{}°",
+        "tooltip": true,
+        "interval": 1800,
+        "exec": "wttrbar --nerd --location yourlocation",
+        "return-type": "json",
+        "exec-if": "command -v wttrbar"
+    },
+    "pulseaudio": {
+        "format": "{icon}",
+        "on-click-right": "wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle",
+        "tooltip-format": "Playing at {volume}%",
+        "scroll-step": 5,
+        "format-muted": "",
+        "format-icons": {
+            "default": [
+                "",
+                "",
+                ""
+            ]
+        }
+    },
+    "group/tray-expander": {
+        "orientation": "inherit",
+        "drawer": {
+            "transition-duration": 600,
+            "children-class": "tray-group-item"
+        },
+        "modules": [
+            "tray"
+        ]
+    },
+    "tray": {
+        "icon-size": 12,
+        "spacing": 12
+    },
+    "mpris": {
+        "format": "{player_icon}",
+        "format-paused": "<span color='grey'>{status_icon}</span>",
+        "max-length": 10,
+        "interval": 1,
+        "player-icons": {
+            "default": "⏸",
+            "mpv": "🎵"
+        },
+        "status-icons": {
+            "paused": "▶"
+        },
+        "ignored-players": [
+            "firefox",
+            "chromium",
+            "brave"
+        ]
+    },
+    "custom/screenrecording-indicator": {
+        "exec": "test -f /tmp/kome-gsr.pid && printf 'REC' || printf ''",
+        "tooltip": true,
+        "tooltip-format": "Toggle screen recording",
+        "on-click": "kome-record",
+        "on-click-right": "kome-record"
+    }
+}

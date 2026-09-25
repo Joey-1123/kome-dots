@@ -1,10 +1,20 @@
 #!/usr/bin/env bash
-# kome-bar-theme — list and apply the vendored Waybar theme sheets.
+# kome-bar-theme — list and apply the vendored Waybar themes.
+#
+# A theme is a stylesheet plus a module layout: applying one links both into
+# ~/.config/waybar and reloads the running bar. reset puts kome's own stylesheet
+# and config.jsonc back.
 set -euo pipefail
+
+# Auto-detect repo root if not set, including when invoked through ~/.local/bin.
+SCRIPT_PATH="$(readlink -f -- "${BASH_SOURCE[0]}")"
+KOME_ROOT="${KOME_ROOT:-$(cd -- "$(dirname -- "$SCRIPT_PATH")/.." && pwd)}"
 
 WAYBAR_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/waybar"
 THEME_DIR="$WAYBAR_DIR/themes"
 ACTIVE_THEME="$WAYBAR_DIR/bar-theme.css"
+ACTIVE_LAYOUT="$WAYBAR_DIR/config.jsonc"
+BASE_LAYOUT="$KOME_ROOT/config/waybar/config.jsonc"
 GENERATED_THEME="$WAYBAR_DIR/theme.css"
 
 usage() {
@@ -17,6 +27,7 @@ Usage:
   kome-bar-theme apply <theme>
   kome-bar-theme reset
   kome-bar-theme path <theme>
+  kome-bar-theme needs <theme>
 EOF
 }
 
@@ -79,20 +90,50 @@ accent_of() {
     printf '%s' "$value"
 }
 
+# needs_of <layout> — the packages a layout expects, from its header marker.
+needs_of() {
+    local value
+    [[ -f "$1" ]] || return 0
+    value="$(sed -n -E 's/.*kome-bar-theme:[[:space:]]*needs=([^ ]*).*/\1/p' "$1" | head -1)"
+    [[ -n "$value" && "$value" != "none" ]] || return 0
+    printf '%s\n' "$value" | tr ',' '\n'
+}
+
+# missing_needs <name> — which of a theme's packages are not installed yet.
+missing_needs() {
+    local name="$1" binary
+    while IFS= read -r binary; do
+        [[ -n "$binary" ]] || continue
+        command -v "$binary" >/dev/null 2>&1 || printf '%s\n' "$binary"
+    done < <(needs_of "$THEME_DIR/$name.jsonc")
+}
+
 # list_themes_json — the kome default first, then every vendored theme.
 list_themes_json() {
-    printf '[{"name":"kome","background":"%s","foreground":"%s","accent":"%s"}' \
+    printf '[{"name":"kome","background":"%s","foreground":"%s","accent":"%s","needs":[]}' \
         "$(value_of "$GENERATED_THEME" bg)" \
         "$(value_of "$GENERATED_THEME" fg)" \
         "$(value_of "$GENERATED_THEME" primary)"
     local name file
     while IFS= read -r name; do
         file="$THEME_DIR/$name.css"
-        printf ',{"name":"%s","background":"%s","foreground":"%s","accent":"%s"}' \
+        local needs="" missing
+        while IFS= read -r binary; do
+            [[ -n "$binary" ]] || continue
+            needs+="${needs:+,}\"$binary\""
+        done < <(needs_of "$THEME_DIR/$name.jsonc")
+        missing=""
+        while IFS= read -r binary; do
+            [[ -n "$binary" ]] || continue
+            missing+="${missing:+,}$binary"
+        done < <(missing_needs "$name")
+        printf ',{"name":"%s","background":"%s","foreground":"%s","accent":"%s","needs":[%s],"missing":"%s"}' \
             "$name" \
             "$(value_of "$GENERATED_THEME" bg)" \
             "$(value_of "$GENERATED_THEME" fg)" \
-            "$(accent_of "$file")"
+            "$(accent_of "$file")" \
+            "$needs" \
+            "$missing"
     done < <(list_themes)
     printf ']\n'
 }
@@ -143,10 +184,18 @@ apply_theme() {
     validate_theme "$name"
     mkdir -p "$WAYBAR_DIR"
     ln -sfn "$THEME_DIR/$name.css" "$ACTIVE_THEME"
+    if [[ -f "$THEME_DIR/$name.jsonc" ]]; then
+        ln -sfn "$THEME_DIR/$name.jsonc" "$ACTIVE_LAYOUT"
+    fi
+    local missing
+    missing="$(missing_needs "$name" | tr '\n' ' ')"
     if reload_bar; then
         printf 'applied %s and reloaded the bar\n' "$name"
     else
         printf 'applied %s for the next bar start\n' "$name"
+    fi
+    if [[ -n "$missing" ]]; then
+        printf 'missing packages: %s (their modules stay hidden until installed)\n' "$missing"
     fi
 }
 
@@ -159,6 +208,9 @@ reset_theme() {
         printf '%s\n' "   only needs to exist as the override slot. kome-bar-theme reset restores it," \
         printf '%s\n' '   and a vendored theme replaces it with its own rules. */'
     } >"$ACTIVE_THEME"
+    if [[ -f "$BASE_LAYOUT" ]]; then
+        ln -sfn "$BASE_LAYOUT" "$ACTIVE_LAYOUT"
+    fi
     if reload_bar; then
         printf '%s\n' 'reset to the kome bar theme and reloaded the bar'
     else
@@ -189,6 +241,11 @@ path)
     [[ $# -eq 2 ]] || { usage >&2; exit 1; }
     validate_theme "$2"
     printf '%s\n' "$THEME_DIR/$2.css"
+    ;;
+needs)
+    [[ $# -eq 2 ]] || { usage >&2; exit 1; }
+    validate_theme "$2"
+    missing_needs "$2"
     ;;
 help|-h|--help)
     usage

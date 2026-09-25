@@ -121,19 +121,34 @@ if ! grep -lq 'custom-omarchy' "$ROOT"/config/waybar/themes/*.css 2>/dev/null \
 else
     fail "Vendored bar themes keep upstream rules and drop the omarchy bits"
 fi
+if [[ "$(find "$ROOT/config/waybar/themes" -maxdepth 1 -type f -name '*.jsonc' | wc -l)" -ge 9 ]] \
+    && ! grep -qE '"(custom/omarchy[a-z-]*)"|"(exec|on-click[a-z-]*)": *"[^"]*omarchy-' "$ROOT"/config/waybar/themes/*.jsonc 2>/dev/null \
+    && grep -Fq '"group/right3"' "$ROOT/config/waybar/themes/V3_7.jsonc" \
+    && grep -Fq '"hyprland/workspaces"' "$ROOT/config/waybar/themes/V7_1a.jsonc" \
+    && grep -Fq 'command -v wttrbar' "$ROOT/config/waybar/themes/V3_7.jsonc" \
+    && [[ -f "$ROOT/config/waybar/scrolling-mpris.py" ]]; then
+    pass "Vendored bar layouts rearrange modules and guard optional packages"
+else
+    fail "Vendored bar layouts rearrange modules and guard optional packages"
+fi
 bar_iso="$(mktemp -d)"
 mkdir -p "$bar_iso/waybar/themes"
 cp "$ROOT/config/waybar/themes/V7_2b.css" "$bar_iso/waybar/themes/"
+cp "$ROOT/config/waybar/themes/V7_2b.jsonc" "$bar_iso/waybar/themes/"
 cp "$ROOT/config/waybar/bar-theme.css" "$bar_iso/waybar/bar-theme.css"
+printf 'ORIGINAL\n' >"$bar_iso/waybar/config.jsonc"
 if XDG_CONFIG_HOME="$bar_iso" "$ROOT/scripts/kome-bar-theme" list 2>/dev/null | grep -Fxq 'V7_2b' \
     && XDG_CONFIG_HOME="$bar_iso" "$ROOT/scripts/kome-bar-theme" apply V7_2b >/dev/null 2>&1 \
     && [[ "$(XDG_CONFIG_HOME="$bar_iso" "$ROOT/scripts/kome-bar-theme" current)" == 'V7_2b' ]] \
+    && [[ "$(readlink -f "$bar_iso/waybar/config.jsonc")" == "$bar_iso/waybar/themes/V7_2b.jsonc" ]] \
     && XDG_CONFIG_HOME="$bar_iso" "$ROOT/scripts/kome-bar-theme" list --json 2>/dev/null | grep -Fq '"accent":"#df6124"' \
+    && [[ -n "$(XDG_CONFIG_HOME="$bar_iso" "$ROOT/scripts/kome-bar-theme" needs V7_2b)" ]] \
     && XDG_CONFIG_HOME="$bar_iso" "$ROOT/scripts/kome-bar-theme" reset >/dev/null 2>&1 \
-    && [[ "$(XDG_CONFIG_HOME="$bar_iso" "$ROOT/scripts/kome-bar-theme" current)" == 'kome' ]]; then
-    pass "kome-bar-theme applies, reports its accent, and resets"
+    && [[ "$(XDG_CONFIG_HOME="$bar_iso" "$ROOT/scripts/kome-bar-theme" current)" == 'kome' ]] \
+    && [[ "$(readlink -f "$bar_iso/waybar/config.jsonc")" == "$ROOT/config/waybar/config.jsonc" ]]; then
+    pass "kome-bar-theme swaps sheet and layout, reports needs, and resets"
 else
-    fail "kome-bar-theme applies, reports its accent, and resets"
+    fail "kome-bar-theme swaps sheet and layout, reports needs, and resets"
 fi
 rm -rf "$bar_iso"
 if grep -Fq '"on-click": "pavucontrol"' "$waybar_config" \

@@ -76,12 +76,15 @@ Item {
         if (barThemes.length > 0) {
             found.push({
                 title: "STATUS BAR",
-                description: "Waybar theme. The bar reloads without restarting.",
+                description: "Waybar theme and module layout. The bar reloads without restarting.",
                 items: barThemes.map(theme => themeItem(theme, "bar-theme", {
                     description: theme.name === "kome"
-                        ? "Default kome bar surface"
+                        ? "Default kome bar surface and modules"
                         : "Palette " + (theme.background || "unknown")
-                            + " - accent " + (theme.accent || "unknown"),
+                            + " - accent " + (theme.accent || "unknown")
+                            + (theme.missing
+                                ? " - needs " + theme.missing.split(",").join(", ")
+                                : ""),
                     accent: theme.accent
                 }))
             })
