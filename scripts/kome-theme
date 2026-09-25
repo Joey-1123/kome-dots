@@ -4,8 +4,9 @@
 
 set -euo pipefail
 
-# Auto-detect repo root if not set (for standalone usage)
-KOME_ROOT="${KOME_ROOT:-$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)}"
+# Auto-detect repo root if not set, including when invoked through ~/.local/bin.
+SCRIPT_PATH="$(readlink -f -- "${BASH_SOURCE[0]}")"
+KOME_ROOT="${KOME_ROOT:-$(cd -- "$(dirname -- "$SCRIPT_PATH")/.." && pwd)}"
 
 KOME_STATE_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/kome"
 THEME_DIR="${KOME_STATE_DIR}/theme"

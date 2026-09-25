@@ -9,7 +9,8 @@ WALLPAPER_FILE="${KOME_STATE_DIR}/wallpaper"
 PROVIDERS_FILE="${KOME_STATE_DIR}/providers.env"
 # shellcheck disable=SC1090
 if [[ -f "$PROVIDERS_FILE" ]]; then source "$PROVIDERS_FILE"; fi
-KOME_ROOT="${KOME_ROOT:-$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)}"
+SCRIPT_PATH="$(readlink -f -- "${BASH_SOURCE[0]}")"
+KOME_ROOT="${KOME_ROOT:-$(cd -- "$(dirname -- "$SCRIPT_PATH")/.." && pwd)}"
 
 usage() {
     cat <<'EOF'

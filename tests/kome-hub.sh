@@ -46,6 +46,14 @@ contains config/quickshell/SettingsWindow.qml 'property bool hovered: false' \
     "sidebar pages expose a hover state"
 missing config/quickshell/SettingsWindow.qml 'onEntered: root.selectedIndex = index' \
     "sidebar hover does not change pages"
+contains config/quickshell/SettingsWindow.qml 'leftMargin: 18' \
+    "top-left corner accents do not overlap"
+contains config/quickshell/SettingsWindow.qml 'rightMargin: 18' \
+    "bottom-right corner accents do not overlap"
+contains config/quickshell/SettingsWindow.qml 'width: parent.width - sidebar.width - parent.spacing * 2 - 1' \
+    "page content reserves both sidebar row gaps"
+missing config/quickshell/SettingsWindow.qml 'width: parent.width - sidebar.width - 29' \
+    "page content does not use the overlapping legacy width"
 
 iso_home="$(mktemp -d)"
 trap 'rm -rf "$iso_home"' EXIT
@@ -87,6 +95,64 @@ if pgrep -x qs >/dev/null 2>&1 \
     && [[ "$doctor_output" == *"[WARN] osd (swayosd) not running"* ]]; then
     fail "kome-doctor recognizes quickshell as the OSD provider"
 fi
+
+contains config/quickshell/SettingsWindow.qml 'page: "KomePage"' \
+    "Kome overview is the first hub page"
+contains config/quickshell/SettingsWindow.qml 'property alias showing: settingsState.showing' \
+    "hub visibility survives Quickshell reloads"
+contains config/quickshell/SettingsWindow.qml 'function showPage(name: string): void' \
+    "hub exposes typed page navigation IPC"
+contains config/quickshell/SettingsWindow.qml 'function runQuickAction(action: string): void' \
+    "hub exposes typed quick-action IPC"
+if [[ -f "$ROOT/config/quickshell/SettingsPages/KomePage.qml" ]]; then
+    contains config/quickshell/KomeAppearance.qml 'height: 366' \
+        "appearance card contains its wallpaper actions"
+    contains config/quickshell/SettingsPages/KomePage.qml 'bottomPadding: 18' \
+        "Kome page keeps bottom content clear of the panel edge"
+    contains config/quickshell/SettingsPages/KomePage.qml '["qs", "ipc", "call", "settings", "hide"]' \
+        "Kome actions close the hub through IPC"
+    contains config/quickshell/SettingsPages/KomePage.qml '["kome-theme", "state"]' \
+        "Kome overview reads machine-readable theme state"
+    contains config/quickshell/SettingsPages/KomePage.qml '["kome-wallpaper", "current"]' \
+        "Kome overview reads the active wallpaper"
+    contains config/quickshell/SettingsPages/KomePage.qml '["kome-theme", "preset", preset]' \
+        "Kome overview applies authentic theme presets"
+    contains config/quickshell/SettingsPages/KomePage.qml '["kome-theme", "set", mode]' \
+        "Kome overview applies light and dark modes"
+    contains config/quickshell/SettingsPages/KomePage.qml '["kome-wallpaper", "picker"]' \
+        "Kome overview opens the visual wallpaper picker"
+    contains config/quickshell/SettingsPages/KomePage.qml '["kome-wallpaper", "next"]' \
+        "Kome overview advances the wallpaper"
+    contains config/quickshell/SettingsPages/KomePage.qml '["kome-wallpaper", "random"]' \
+        "Kome overview selects a random wallpaper"
+else
+    fail "Kome overview page exists"
+fi
+
+ln -s "$ROOT/scripts/kome-theme" "$iso_home/.local/bin/kome-theme"
+mkdir -p "$iso_home/.config/matugen/templates"
+cp "$ROOT/config/matugen/config.toml" "$iso_home/.config/matugen/config.toml"
+cp "$ROOT"/config/matugen/templates/* "$iso_home/.config/matugen/templates/"
+for command in hyprctl notify-send sleep; do
+    cat >"$iso_home/.local/bin/$command" <<'EOF'
+#!/usr/bin/env sh
+exit 0
+EOF
+done
+chmod +x "$iso_home/.local/bin/hyprctl" "$iso_home/.local/bin/notify-send" "$iso_home/.local/bin/sleep"
+if HOME="$iso_home" XDG_CONFIG_HOME="$iso_home/.config" \
+    PATH="$iso_home/.local/bin:/usr/bin:/bin" \
+    "$iso_home/.local/bin/kome-theme" preset tokyo-night --no-reload >/dev/null 2>&1 \
+    && [[ "$(cat "$iso_home/.config/kome/theme/preset" 2>/dev/null)" == "tokyo-night" ]] \
+    && [[ -f "$iso_home/.config/quickshell/Theme.qml" ]]; then
+    pass "kome-theme applies presets through installed symlinks"
+else
+    fail "kome-theme applies presets through installed symlinks"
+fi
+contains scripts/kome-theme 'readlink -f -- "${BASH_SOURCE[0]}"' \
+    "kome-theme resolves its repo root through symlinks"
+contains scripts/kome-wallpaper 'readlink -f -- "${BASH_SOURCE[0]}"' \
+    "kome-wallpaper resolves its repo root through symlinks"
 
 if [[ "$FAIL" -eq 0 ]]; then
     echo "=== kome-hub: all pass ==="

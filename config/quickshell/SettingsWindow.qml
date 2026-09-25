@@ -28,7 +28,16 @@ PanelWindow {
         item: showing ? backdrop : null
     }
 
-    property bool showing: false
+    PersistentProperties {
+        id: settingsState
+        reloadableId: "kome-control-hub"
+
+        property bool showing: false
+        property int selectedIndex: 0
+    }
+
+    property alias showing: settingsState.showing
+    property alias selectedIndex: settingsState.selectedIndex
 
     function openPanel() {
         showing = true
@@ -60,6 +69,24 @@ PanelWindow {
         function isShowing(): bool {
             return root.showing
         }
+
+        function showPage(name: string): void {
+            const query = name.toLowerCase()
+            for (let i = 0; i < root.navItems.length; i++) {
+                const item = root.navItems[i]
+                if (item.name.toLowerCase() === query ||
+                    item.page.toLowerCase() === name.toLowerCase()) {
+                    root.selectedIndex = i
+                    return
+                }
+            }
+        }
+
+        function runQuickAction(action: string): void {
+            if (pageLoader.item && pageLoader.item.runQuickAction) {
+                pageLoader.item.runQuickAction(action)
+            }
+        }
     }
 
     PwObjectTracker {
@@ -87,7 +114,8 @@ PanelWindow {
     }
 
     property var navItems: [
-        { name: "System", icon: "󰒓", page: "SystemPage" },
+        { name: "Kome", icon: "󰒓", page: "KomePage" },
+        { name: "System", icon: "󰒛", page: "SystemPage" },
         { name: "Audio", icon: "\uf028", page: "SoundPage" },
         { name: "Display", icon: "\uf108", page: "MonitorsPage" },
         { name: "Network", icon: "\uf1eb", page: "NetworkPage" },
@@ -96,7 +124,6 @@ PanelWindow {
         { name: "Configs", icon: "󰧮",  page: "ConfigsPage" }
     ]
 
-    property int selectedIndex: 0
     readonly property bool reducedMotion:
         Quickshell.env("KOME_REDUCED_MOTION") === "1"
 
@@ -105,8 +132,8 @@ PanelWindow {
 
         anchors.centerIn: parent
 
-        width: Math.min(980, root.width - 80)
-        height: Math.min(640, root.height - 80)
+        width: Math.min(1080, root.width - 64)
+        height: Math.min(700, root.height - 56)
 
         open: root.showing
 
@@ -130,11 +157,10 @@ PanelWindow {
 
                 color: Theme.accent2
 
-                anchors {
-                    top: parent.top
-                    left: parent.left
-                    margins: 14
-                }
+                anchors.top: parent.top
+                anchors.left: parent.left
+                anchors.topMargin: 14
+                anchors.leftMargin: 18
             }
 
             Rectangle {
@@ -156,11 +182,10 @@ PanelWindow {
 
                 color: Theme.accent2
 
-                anchors {
-                    bottom: parent.bottom
-                    right: parent.right
-                    margins: 14
-                }
+                anchors.bottom: parent.bottom
+                anchors.right: parent.right
+                anchors.bottomMargin: 14
+                anchors.rightMargin: 18
             }
 
             Rectangle {
@@ -317,7 +342,7 @@ PanelWindow {
                 }
 
                 Item {
-                    width: parent.width - sidebar.width - 29
+                    width: parent.width - sidebar.width - parent.spacing * 2 - 1
                     height: parent.height
 
                     clip: true
