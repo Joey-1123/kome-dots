@@ -5,7 +5,7 @@ SettingsPage {
     id: page
 
     title: "CONFIGS"
-    subtitle: "Open the files that shape your desktop, pick the terminal theme"
+    subtitle: "Open the files that shape your desktop, pick terminal and bar themes"
     statusText: service.statusText.toUpperCase()
     busy: service.busy
 
