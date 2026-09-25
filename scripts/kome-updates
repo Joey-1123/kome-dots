@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # kome-updates — pending-update notifier with a daily systemd timer.
-# Usage: kome-updates {check|enable|disable}
+# Usage: kome-updates {check|count|enable|disable}
 set -euo pipefail
 
 SYSTEMD_USER_DIR="${HOME}/.config/systemd/user"
@@ -64,7 +64,8 @@ cmd_disable() {
 
 case "${1:-check}" in
     check) cmd_check ;;
+    count) count_updates ;;
     enable) cmd_enable ;;
     disable) cmd_disable ;;
-    *) echo "Usage: $0 {check|enable|disable}"; exit 1 ;;
+    *) echo "Usage: $0 {check|count|enable|disable}"; exit 1 ;;
 esac

@@ -47,6 +47,47 @@ contains config/quickshell/SettingsWindow.qml 'property bool hovered: false' \
 missing config/quickshell/SettingsWindow.qml 'onEntered: root.selectedIndex = index' \
     "sidebar hover does not change pages"
 
+iso_home="$(mktemp -d)"
+trap 'rm -rf "$iso_home"' EXIT
+mkdir -p "$iso_home/.config/kome" "$iso_home/.local/bin"
+printf 'dark\n' >"$iso_home/.config/kome/mode"
+
+if theme_state="$(HOME="$iso_home" XDG_CONFIG_HOME="$iso_home/.config" bash "$ROOT/scripts/kome-theme" state 2>/dev/null)" \
+    && jq -e '.mode == "dark" and .preset == ""' <<<"$theme_state" >/dev/null; then
+    pass "kome-theme state emits mode and preset"
+else
+    fail "kome-theme state emits mode and preset (got: ${theme_state:-no output})"
+fi
+
+cat >"$iso_home/.local/bin/checkupdates" <<'EOF'
+#!/usr/bin/env sh
+printf '%s\n' one two
+EOF
+for helper in yay paru; do
+    cat >"$iso_home/.local/bin/$helper" <<'EOF'
+#!/usr/bin/env sh
+exit 0
+EOF
+done
+chmod +x "$iso_home/.local/bin/checkupdates" "$iso_home/.local/bin/yay" "$iso_home/.local/bin/paru"
+if update_count="$(HOME="$iso_home" PATH="$iso_home/.local/bin:/usr/bin:/bin" bash "$ROOT/scripts/kome-updates" count 2>/dev/null)" \
+    && [[ "$update_count" == "2" ]]; then
+    pass "kome-updates count emits a number"
+else
+    fail "kome-updates count emits a number (got: ${update_count:-no output})"
+fi
+
+if doctor_output="$(NO_COLOR=1 bash "$ROOT/scripts/kome-doctor" 2>&1)" \
+    && [[ "$doctor_output" != *$'\033'* ]]; then
+    pass "kome-doctor honors NO_COLOR"
+else
+    fail "kome-doctor honors NO_COLOR"
+fi
+if pgrep -x qs >/dev/null 2>&1 \
+    && [[ "$doctor_output" == *"[WARN] osd (swayosd) not running"* ]]; then
+    fail "kome-doctor recognizes quickshell as the OSD provider"
+fi
+
 if [[ "$FAIL" -eq 0 ]]; then
     echo "=== kome-hub: all pass ==="
 else

@@ -9,6 +9,7 @@ KOME_ROOT="${KOME_ROOT:-$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)}"
 
 KOME_STATE_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/kome"
 THEME_DIR="${KOME_STATE_DIR}/theme"
+PRESET_FILE="${THEME_DIR}/preset"
 PROVIDERS_FILE="${KOME_STATE_DIR}/providers.env"
 MODE_FILE="${KOME_STATE_DIR}/mode"
 WALLPAPER_FILE="${KOME_STATE_DIR}/wallpaper"
@@ -17,6 +18,7 @@ WALLPAPER_FILE="${KOME_STATE_DIR}/wallpaper"
 if [[ -f "$PROVIDERS_FILE" ]]; then source "$PROVIDERS_FILE"; fi
 
 CURRENT_MODE="$(cat "$MODE_FILE" 2>/dev/null || echo dark)"
+CURRENT_PRESET="$(cat "$PRESET_FILE" 2>/dev/null || true)"
 CURRENT_WALLPAPER="$(cat "$WALLPAPER_FILE" 2>/dev/null || true)"
 
 usage() {
@@ -30,6 +32,7 @@ Usage:
   kome-theme preset <name> [--no-reload]
   kome-theme presets
   kome-theme current
+  kome-theme state
   kome-theme schedule [on|off]
 
 Presets (curated static schemes, no wallpaper needed):
@@ -172,6 +175,7 @@ cmd_preset() {
     migrate_generated
     render_preset "$name" || return 1
     echo "dark" >"$MODE_FILE"
+    echo "$name" >"$PRESET_FILE"
 
     # Pair the theme with its own wallpaper when the preset ships one.
     local preset_wall
@@ -262,6 +266,7 @@ apply_theme() {
 
     echo "$mode" >"$MODE_FILE"
     echo "$wallpaper" >"$WALLPAPER_FILE"
+    rm -f "$PRESET_FILE"
 
     if [[ "$no_reload" != "1" ]]; then
         reload_components
@@ -316,6 +321,11 @@ cmd_current() {
     echo "$CURRENT_MODE"
 }
 
+cmd_state() {
+    jq -n --arg mode "$CURRENT_MODE" --arg preset "$CURRENT_PRESET" \
+        '{mode: $mode, preset: $preset}'
+}
+
 cmd_schedule() {
     local arg="${1:-}"
     local timer_unit="kome-theme-toggle.timer"
@@ -361,6 +371,7 @@ case "${1:-}" in
     preset) shift; cmd_preset "$@" ;;
     presets) cmd_presets ;;
     current) cmd_current ;;
+    state) cmd_state ;;
     schedule) shift; cmd_schedule "$@" ;;
     *) usage; exit 1 ;;
-esac                                                 
+esac

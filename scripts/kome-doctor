@@ -9,9 +9,15 @@ PROVIDERS_FILE="${KOME_STATE_DIR}/providers.env"
 # shellcheck disable=SC1090
 if [[ -f "$PROVIDERS_FILE" ]]; then source "$PROVIDERS_FILE"; fi
 
-ok() { printf '\033[32m[OK]\033[0m %s\n' "$*"; }
-warn() { printf '\033[33m[WARN]\033[0m %s\n' "$*"; }
-err() { printf '\033[31m[ERR]\033[0m %s\n' "$*"; }
+if [[ -n "${NO_COLOR:-}" || ! -t 1 ]]; then
+    ok() { printf '[OK] %s\n' "$*"; }
+    warn() { printf '[WARN] %s\n' "$*"; }
+    err() { printf '[ERR] %s\n' "$*"; }
+else
+    ok() { printf '\033[32m[OK]\033[0m %s\n' "$*"; }
+    warn() { printf '\033[33m[WARN]\033[0m %s\n' "$*"; }
+    err() { printf '\033[31m[ERR]\033[0m %s\n' "$*"; }
+fi
 
 # running <name> — pgrep by process name, falling back to full cmdline for
 # names longer than the 15-char pgrep limit.
@@ -74,9 +80,13 @@ case "${KOME_WALLPAPER:-hyprpaper}" in
     hyprpaper) check_daemon hyprpaper "wallpaper (hyprpaper)" ;;
     awww)      check_daemon awww-daemon "wallpaper (awww)" ;;
 esac
-case "${KOME_OSD:-swayosd}" in
-    swayosd) check_daemon swayosd-server "osd (swayosd)" ;;
-esac
+if running qs; then
+    ok "osd (quickshell) running"
+else
+    case "${KOME_OSD:-swayosd}" in
+        swayosd) check_daemon swayosd-server "osd (swayosd)" ;;
+    esac
+fi
 
 # On-demand: launched by a keybind, so absence is normal.
 echo ""
