@@ -69,6 +69,11 @@ start_all() {
         swayosd) start_component "swayosd-server" "swayosd-server" ;;
     esac
 
+    # network tray applet — provides the clickable wifi/ethernet UI
+    if command -v nm-applet >/dev/null 2>&1; then
+        start_component "nm-applet" "nm-applet"
+    fi
+
     # lock/idle
     case "${KOME_IDLE:-hypridle}" in
         hypridle) start_component "hypridle" "hypridle" ;;
@@ -123,6 +128,7 @@ stop_all() {
         quickshell) pkill quickshell 2>/dev/null || true ;;
     esac
     pkill swayosd-server 2>/dev/null || true
+    pkill nm-applet 2>/dev/null || true
     case "${KOME_IDLE:-hypridle}" in
         hypridle) pkill hypridle 2>/dev/null || true ;;
         swayidle) pkill swayidle 2>/dev/null || true ;;

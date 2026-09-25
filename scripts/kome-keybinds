@@ -20,6 +20,7 @@ SUPER + O | Toggle opacity
 SUPER + GRAVE | Power menu
 SUPER + TAB | Lock screen
 SUPER + V | Clipboard history
+SUPER + N | Notification panel
 Print | Screenshot region
 SHIFT + Print | Screenshot full
 SUPER + Print | Screenshot window

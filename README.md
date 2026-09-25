@@ -94,6 +94,7 @@ Then log out and select Hyprland from greetd (or run `Hyprland` from TTY).
 | `SUPER + E` | File manager (yazi) |
 | `SUPER + W` | Wallpaper picker |
 | `SUPER + V` | Clipboard history |
+| `SUPER + N` | Notification panel |
 | `SUPER + Q` | Close window |
 | `SUPER + F` | Fullscreen |
 | `SUPER + SPACE` | Toggle float |

@@ -1,0 +1,38 @@
+#!/usr/bin/env bash
+# kome-notifications — control the notification panel for the selected provider.
+# Usage: kome-notifications [toggle|close|clear|dnd]
+set -euo pipefail
+
+KOME_STATE_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/kome"
+PROVIDERS_FILE="${KOME_STATE_DIR}/providers.env"
+
+# shellcheck disable=SC1090
+if [[ -f "$PROVIDERS_FILE" ]]; then source "$PROVIDERS_FILE"; fi
+
+case "${1:-toggle}" in
+    toggle) action=--toggle-panel ;;
+    close)  action=--close-panel ;;
+    clear)  action=--close-all ;;
+    dnd)    action=--toggle-dnd ;;
+    *)
+        echo "Usage: $0 [toggle|close|clear|dnd]" >&2
+        exit 1
+        ;;
+esac
+
+case "${KOME_NOTIFICATIONS:-swaync}" in
+    swaync) swaync-client "$action" ;;
+    mako)   makoctl dismiss >/dev/null 2>&1 || true ;;
+    dunst)
+        case "$1" in
+            toggle) dunstctl action-toggle >/dev/null 2>&1 || true ;;
+            close)  dunstctl action-close  >/dev/null 2>&1 || true ;;
+            clear)  dunstctl history-clear >/dev/null 2>&1 || true ;;
+            dnd)    dunstctl set-dnd true  >/dev/null 2>&1 || true ;;
+        esac
+        ;;
+    *)
+        echo "unknown notification provider: ${KOME_NOTIFICATIONS:-swaync}" >&2
+        exit 1
+        ;;
+esac

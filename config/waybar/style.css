@@ -22,20 +22,19 @@ window#waybar {
 }
 
 #workspaces button {
-    padding: 0 4px;
-    margin: 4px 1px;
-    border-radius: 8px;
-    color: @outline;
+    padding: 0 3px;
+    margin: 4px 0;
+    border-radius: 6px;
+    color: @outline_dim;
     background: transparent;
-    min-width: 14px;
+    min-width: 16px;
     text-shadow: none;
 }
 
-/* Active workspace reads as an accent dot, not a saturated pill —
-   a full primary fill next to near-black bg reads as an alert. */
 #workspaces button.active {
-    color: @primary;
-    background: @surface_hi;
+    color: @bg;
+    background: @primary;
+    font-weight: bold;
 }
 
 #workspaces button.urgent {

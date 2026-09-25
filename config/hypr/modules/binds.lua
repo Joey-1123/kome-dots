@@ -49,6 +49,9 @@ hl.bind(m .. " + TAB", hl.dsp.exec_cmd("kome-lock"))
 -- Clipboard ----------------------------------------------------------------
 hl.bind(m .. " + V", hl.dsp.exec_cmd("kome-clipboard"))
 
+-- Notification panel -------------------------------------------------------
+hl.bind(m .. " + N", hl.dsp.exec_cmd("kome-notifications toggle"))
+
 -- Screenshots --------------------------------------------------------------
 hl.bind("Print", hl.dsp.exec_cmd("kome-screenshot region"))
 hl.bind("SHIFT + Print", hl.dsp.exec_cmd("kome-screenshot full"))

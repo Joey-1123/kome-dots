@@ -13,12 +13,14 @@
     "modules-right": ["custom/mpris-marquee", "pulseaudio", "network", "battery", "cpu", "memory", "tray"],
 
     "hyprland/workspaces": {
+        // Numbers, not dots: a dot can't tell workspace 3 from 7.
+        // Only id keys + default — an "active" key would shadow the number.
         "format": "{icon}",
         "on-click": "activate",
         "format-icons": {
-            "default": "●",
-            "active": "●",
-            "empty": "○"
+            "1": "1", "2": "2", "3": "3", "4": "4", "5": "5",
+            "6": "6", "7": "7", "8": "8", "9": "9", "10": "0",
+            "default": "·"
         }
     },
     "hyprland/submap": {
