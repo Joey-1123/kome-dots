@@ -19,14 +19,19 @@ PanelWindow {
     // Resolved once, used to expand relative paths from config.json
     readonly property string homeDir: Quickshell.env("HOME")
 
-    implicitHeight: 500
+    // Full-screen overlay: a dimmed backdrop with the carousel centred,
+    // rather than a floating 500px band that leaves the desktop showing.
+    implicitHeight: Screen.height
     implicitWidth: Screen.width
-    color: "transparent"
+    color: "#B3000000"
     aboveWindows: true
     exclusionMode: "Ignore"
-    exclusiveZone: 1
+    exclusiveZone: -1
     WlrLayershell.layer: WlrLayer.Overlay
     WlrLayershell.keyboardFocus: WlrKeyboardFocus.Exclusive
+
+    // Carousel strip height, derived from the viewport so it scales.
+    readonly property real stripHeight: Math.min(Screen.height * 0.55, 520)
 
     Component.onCompleted:
         Quickshell.execDetached([
@@ -59,7 +64,10 @@ PanelWindow {
 
     ListView {
         id: list
-        anchors.fill: parent
+        anchors.horizontalCenter: parent.horizontalCenter
+        anchors.verticalCenter: parent.verticalCenter
+        width: parent.width
+        height: main.stripHeight
         focus: true
         model: folderModel
         orientation: ListView.Horizontal
@@ -124,7 +132,7 @@ PanelWindow {
 
         delegate: Item {
             id: delegateItem
-            height: 500
+            height: list.height
             property bool active: index === list.selectedIndex
 
             // Base slot width, independent of this item's own width.

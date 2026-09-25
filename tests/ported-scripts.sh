@@ -238,6 +238,24 @@ else
 fi
 rm -rf "$iso_home2"
 
+# Presets ship real palettes covering every template token.
+preset_bad=0
+for pj in "$ROOT"/config/matugen/presets/*.json; do
+    [[ -f "$pj" ]] || continue
+    # collect every role any template references
+    for tok in $(grep -rhoE '\{\{colors\.[a-z_0-9]+\.default\.' "$ROOT"/config/matugen/templates/ | sed 's/{{colors\.//; s/\.default\.//' | sort -u); do
+        if ! jq -e --arg k "$tok" 'has($k)' "$pj" >/dev/null 2>&1; then
+            printf 'palette %s missing role: %s\n' "$(basename "$pj")" "$tok"
+            preset_bad=1
+        fi
+    done
+done
+if [[ "$preset_bad" -eq 0 ]]; then
+    pass "presets cover every template colour role"
+else
+    fail "presets cover every template colour role"
+fi
+
 if [[ "$FAIL" -eq 0 ]]; then
     echo "=== ported-scripts: all pass ==="
 else

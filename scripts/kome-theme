@@ -106,14 +106,48 @@ run_matugen_color() {
     matugen color hex "$hex" --mode "$mode" --config ~/.config/matugen/config.toml
 }
 
-# preset_seed <name> — prints "<hex> <mode>" for a curated preset.
-preset_seed() {
-    case "$1" in
-        gruvbox)          printf '%s' "#d79921 dark" ;;
-        catppuccin-mocha) printf '%s' "#cba6f7 dark" ;;
-        tokyo-night)      printf '%s' "#7aa2f7 dark" ;;
-        *) return 1 ;;
-    esac
+PRESET_DIR="${KOME_CONFIG_SRC:-${KOME_ROOT}/config}/matugen/presets"
+
+# render_preset <name> — apply a curated palette by substituting role colours
+# straight into the matugen templates. Bypasses matugen so the result is the
+# theme's real hex values, not a Material You derivation from one seed.
+render_preset() {
+    local name="$1" palette="$PRESET_DIR/$name.json"
+    [[ -f "$palette" ]] || { echo "unknown preset: $name" >&2; return 1; }
+
+    local config="${HOME}/.config/matugen/config.toml"
+    [[ -f "$config" ]] || { echo "matugen config missing: $config" >&2; return 1; }
+
+    # Substitution program, built once from the palette. Templates use both
+    # .hex ("#rrggbb") and .hex_stripped ("rrggbb"), so cover both.
+    local -a script=()
+    local key hex stripped
+    while IFS=$'\t' read -r key hex; do
+        [[ -n "$key" && -n "$hex" ]] || continue
+        stripped="${hex#\#}"
+        script+=(-e "s|{{colors\.${key}\.default\.hex_stripped}}|${stripped}|g")
+        script+=(-e "s|{{colors\.${key}\.default\.hex}}|${hex}|g")
+    done < <(jq -r 'to_entries[] | "\(.key)\t\(.value)"' "$palette")
+    [[ ${#script[@]} -gt 0 ]] || { echo "empty palette: $palette" >&2; return 1; }
+
+    # Walk input_path/output_path pairs in declaration order.
+    local in="" out="" rendered=0
+    while IFS= read -r line; do
+        case "$line" in
+            input_path\ *)  in="${line#*\'}"; in="${in%\'}" ;;
+            output_path\ *) out="${line#*\'}"; out="${out%\'}" ;;
+        esac
+        [[ -n "$in" && -n "$out" ]] || continue
+        in="${in/#\~/$HOME}"
+        out="${out/#\~/$HOME}"
+        [[ -f "$in" ]] || { in=""; out=""; continue; }
+        mkdir -p "$(dirname "$out")"
+        sed "${script[@]}" "$in" >"$out"
+        rendered=$((rendered + 1))
+        in=""; out=""
+    done <"$config"
+
+    [[ "$rendered" -gt 0 ]] || { echo "no templates rendered for $name" >&2; return 1; }
 }
 
 cmd_presets() {
@@ -129,16 +163,32 @@ cmd_preset() {
             *) shift ;;
         esac
     done
-    local seed
-    seed="$(preset_seed "$name" 2>/dev/null)" || {
+    [[ -f "$PRESET_DIR/$name.json" ]] || {
         echo "unknown preset: $name (available: $(cmd_presets | tr '\n' ' '))" >&2
         return 1
     }
-    local hex="${seed%% *}" mode="${seed##* }"
     ensure_dirs
     migrate_generated
-    run_matugen_color "$mode" "$hex" || return 1
-    echo "$mode" >"$MODE_FILE"
+    render_preset "$name" || return 1
+    echo "dark" >"$MODE_FILE"
+
+    # Pair the theme with its own wallpaper when the preset ships one.
+    local preset_wall
+    preset_wall="$(find "${KOME_ROOT}/wallpapers/dark/${name}" -type f \
+        \( -iname '*.png' -o -iname '*.jpg' \) 2>/dev/null | sort | head -n 1 || true)"
+    if [[ -n "$preset_wall" ]]; then
+        echo "$preset_wall" >"$WALLPAPER_FILE"
+        if command -v hyprctl >/dev/null 2>&1; then
+            for _ in $(seq 1 10); do
+                hyprctl hyprpaper wallpaper ",$preset_wall" >/dev/null 2>&1 && break
+                sleep 0.5
+            done
+        fi
+        if command -v awww-cli >/dev/null 2>&1; then
+            awww-cli set "$preset_wall" >/dev/null 2>&1 || true
+        fi
+    fi
+
     if [[ "$no_reload" != "1" ]]; then
         reload_components
     fi

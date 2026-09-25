@@ -127,6 +127,20 @@ Starter set curated from [43PR's wallhaven collection](https://wallhaven.cc/user
 | `dark/43pr-lucy-moon.jpg` | [wallhaven 3lywyy](https://wallhaven.cc/w/3lywyy) (Dino Art) |
 | `light/43pr-winter-road.jpg` | [wallhaven y8keeg](https://wallhaven.cc/w/y8keeg) |
 
+## Theme Presets
+
+`kome-theme preset <name>` applies a theme's **actual** palette — the real hex values from each project, not a Material You derivation from a seed colour. Each preset also ships a matching generated wallpaper, applied automatically.
+
+| Preset | Background | Foreground | Accent |
+|--------|-----------|-----------|--------|
+| `gruvbox` | `#282828` | `#ebdbb2` | `#d79921` |
+| `catppuccin-mocha` | `#1e1e2e` | `#cdd6f4` | `#cba6f7` |
+| `tokyo-night` | `#1a1b26` | `#c0caf5` | `#7aa2f7` |
+
+Palettes live in `config/matugen/presets/*.json`; templates are rendered directly from them, so every component (bar, lock, launcher, terminal, GTK, cava) gets the same authentic colours. Regenerate the bundled wallpapers with `bash scripts/theme-wallpapers.sh`.
+
+Dynamic wallpapers still use matugen: `kome-theme set dark|light`.
+
 ## Theming
 
 ```bash
@@ -135,8 +149,9 @@ kome-theme set light         # set light mode
 kome-theme toggle            # toggle
 kome-theme apply             # re-apply current mode
 kome-theme schedule on       # auto-toggle at 06:00/20:00
-kome-theme preset gruvbox    # curated static scheme (no wallpaper needed)
+kome-theme preset gruvbox    # real palette + matching wallpaper, no matugen
 kome-theme presets           # list: gruvbox, catppuccin-mocha, tokyo-night
+kome-theme preset --help     # presets apply authentic theme hex values
 kome-wallpaper pick          # interactive picker
 kome-wallpaper random        # random from mode dir
 ```
