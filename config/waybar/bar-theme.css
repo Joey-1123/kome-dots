@@ -1,0 +1,4 @@
+/* kome bar theme: the verified default.
+   Empty on purpose - style.css already carries the kome surface, so this file
+   only needs to exist as the override slot. kome-bar-theme reset restores it,
+   and a vendored theme replaces it with its own rules. */

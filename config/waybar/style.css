@@ -1,3 +1,10 @@
+/* kome — bar styling.
+   Colors come from the generated palette (theme.css), so the bar follows light
+   and dark mode. bar-theme.css is the override slot: a vendored theme is linked
+   there, and kome-bar-theme reset puts the verified kome surface back. */
+@import "theme.css";
+@import "bar-theme.css";
+
 /* General */
 * {
     font-family: "JetBrainsMono Nerd Font", "Symbols Nerd Font Mono", monospace;
@@ -7,29 +14,25 @@
 
 window#waybar {
     min-height: 10px;
-    background-color: rgba(20, 20, 20, 0);
-    color: #ffffff;
+    background-color: transparent;
+    color: @fg;
 }
 
-/* LEFT */
-.modules-left {
-    background-color: rgba(20, 20, 20, 0.5);
-    border-radius: 10px;
-    margin: 4px 0 2px 6px;
-}
-
-/* CENTER */
-.modules-center {
-    background-color: rgba(20, 20, 20, 0.5);
+/* Module groups */
+.modules-left,
+.modules-center,
+.modules-right {
+    background-color: alpha(@surface, 0.55);
     border-radius: 10px;
     margin: 4px 0 2px;
 }
 
-/* RIGHT */
+.modules-left {
+    margin-left: 6px;
+}
+
 .modules-right {
-    background-color: rgba(20, 20, 20, 0.5);
-    border-radius: 10px;
-    margin: 4px 6px 2px 0;
+    margin-right: 6px;
 }
 
 /* Module spacing */
@@ -47,14 +50,9 @@ window#waybar {
 
 /* Power */
 #custom-power {
-    color: #ffffff;
+    color: @fg;
     font-size: 15px;
     margin-right: 10px;
-}
-
-/* MPRIS */
-#custom-mpris-marquee {
-    padding: 0 10px;
 }
 
 /* Clock */
@@ -64,20 +62,20 @@ window#waybar {
 
 /* Temperature */
 #temperature.critical {
-    color: #ff5555;
+    color: @error;
 }
 
 /* Tooltip */
 tooltip {
-    background-color: rgba(20, 20, 20, 0.4);
-    color: #ffffff;
+    background-color: alpha(@surface_hi, 0.92);
+    color: @fg;
     font-weight: bold;
-    border: 1px solid rgba(255, 255, 255, 0);
+    border: 1px solid alpha(@fg, 0);
     border-radius: 10px;
 }
 
 tooltip label {
-    color: #ffffff;
+    color: @fg;
     font-size: 13px;
     padding: 0;
     margin: 0;

@@ -175,6 +175,28 @@ kome-kitty-theme reset             # back to the generated palette
 Re-running `./install.sh` re-links `theme.conf` and returns Kitty to the
 Bright Lights default.
 
+### Bar themes
+
+The bar's colours come from the same generated palette, so it follows light and
+dark mode. `config/waybar/bar-theme.css` is the override slot: it ships empty
+(the verified kome surface) and `kome-bar-theme` swaps in one of the vendored
+sheets in `config/waybar/themes`, adapted from HANCORE's MIT-licensed
+waybar-themes (island pills, flat underline, outlined groups). The **Configs**
+page lists them with a preview swatch, and the bar reloads over SIGUSR2 — no
+restart, no flicker.
+
+```bash
+kome-bar-theme list              # available themes
+kome-bar-theme list --json       # name plus palette and accent
+kome-bar-theme current           # kome | <theme>
+kome-bar-theme apply V7_2b       # switch theme
+kome-bar-theme reset             # back to the kome bar
+```
+
+Adding a sheet to `config/waybar/themes/` is enough for it to appear in the
+picker; a `kome-bar-theme: accent=#rrggbb` comment in the header supplies the
+swatch colour.
+
 ## Provider Overrides
 
 Edit `~/.config/kome/providers.env` to swap components:

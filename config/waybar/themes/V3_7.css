@@ -1,0 +1,48 @@
+/* Adapted from HANCORE-linux/waybar-themes V3.7 (MIT), drdeltree.
+ * Upstream: a single rounded wrapper with a strong shadow, and inverted right
+ * groups. The Omarchy colour import is dropped; the inverted groups use kome's
+ * generated foreground and background tokens.
+ * kome-bar-theme: accent=#6cbeb5 */
+
+* {
+    font-size: 11px;
+    font-weight: bold;
+    border: none;
+}
+
+window#waybar {
+    background-color: transparent;
+    color: @fg;
+}
+
+#waybar > box {
+    margin: 2px 8px 2px 8px;
+    border-radius: 8px;
+    background-color: alpha(@surface, 0.75);
+    box-shadow: 0px 1px 2px 1px rgba(0, 0, 0, 0.5);
+    transition-property: background-color;
+    transition-duration: 0.5s;
+}
+
+.modules-left,
+.modules-center,
+.modules-right {
+    background-color: transparent;
+    border: none;
+    border-radius: 0px;
+    box-shadow: none;
+    margin: 0px 0px 0px 0px;
+    padding: 0 4px;
+}
+
+.modules-right {
+    border-radius: 26px;
+    background-color: alpha(@fg, 0.65);
+    color: @bg;
+    padding: 0px 8px;
+    margin: 3px 4px 3px 6px;
+}
+
+#custom-power {
+    color: @bg;
+}

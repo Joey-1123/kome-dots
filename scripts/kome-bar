@@ -9,6 +9,14 @@ PROVIDERS_FILE="${KOME_STATE_DIR}/providers.env"
 # shellcheck disable=SC1090
 if [[ -f "$PROVIDERS_FILE" ]]; then source "$PROVIDERS_FILE"; fi
 
+# waybar's style.css imports the generated palette, so a fresh install has no
+# colours to style with until kome-theme has run at least once.
+ensure_palette() {
+    local colors="${XDG_CONFIG_HOME:-$HOME/.config}/waybar/theme.css"
+    [[ -f "$colors" ]] && return 0
+    kome-theme apply >/dev/null 2>&1 || true
+}
+
 case "${1:-toggle}" in
     toggle)
         case "${KOME_BAR:-waybar}" in
@@ -16,6 +24,7 @@ case "${1:-toggle}" in
                 if pgrep -x waybar >/dev/null; then
                     pkill waybar
                 else
+                    ensure_palette
                     waybar &
                 fi
                 ;;
@@ -30,7 +39,7 @@ case "${1:-toggle}" in
         ;;
     restart)
         case "${KOME_BAR:-waybar}" in
-            waybar) pkill waybar; waybar & ;;
+            waybar) ensure_palette; pkill waybar; waybar & ;;
             quickshell) pkill quickshell; quickshell -c shell.qml & ;;
         esac
         ;;

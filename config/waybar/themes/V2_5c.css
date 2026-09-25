@@ -1,0 +1,42 @@
+/* Adapted from HANCORE-linux/waybar-themes V2.5c (MIT), drdeltree.
+ * Upstream: the oldest multi-accent theme, with an orange clock, a muted green
+ * volume, and a sand temperature. The Omarchy colour import is dropped; the
+ * three accents are kept as concrete values because they are the theme.
+ * kome-bar-theme: accent=#df6124 */
+
+* {
+    font-size: 12px;
+    border: none;
+}
+
+window#waybar {
+    background-color: transparent;
+    color: @fg;
+}
+
+.modules-left,
+.modules-center,
+.modules-right {
+    background-color: alpha(@surface, 0.85);
+    border: 1px solid alpha(@fg, 0.12);
+    border-radius: 2px;
+    margin: 4px 5px 2px 5px;
+    padding: 0 5px;
+}
+
+#clock {
+    color: #df6124;
+    font-weight: bold;
+}
+
+#pulseaudio {
+    color: #525e5a;
+}
+
+#temperature {
+    color: #c2a46d;
+}
+
+#temperature.critical {
+    color: #df6124;
+}

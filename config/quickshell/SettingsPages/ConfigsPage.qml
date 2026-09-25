@@ -40,39 +40,48 @@ SettingsPage {
                     required property var modelData
                     width: parent.width
                     label: modelData.label
-                    description: modelData.action === "kitty-theme"
+                    description: modelData.action
                         ? modelData.description
                         : service.pathExists(modelData.path)
                             ? modelData.path
                             : modelData.path + " · not installed"
-                    selected: modelData.action === "kitty-theme"
-                        && service.kittyTheme === modelData.value
-                    clickable: modelData.action === "kitty-theme"
+                    selected: modelData.action
+                        && service.activeTheme(modelData.action) === modelData.value
+                    clickable: modelData.action
                         ? !service.busy
                         : service.pathExists(modelData.path)
-                    onClicked: modelData.action === "kitty-theme"
-                        ? service.applyKittyTheme(modelData.value)
-                        : service.open(modelData.path)
+                    onClicked: {
+                        if (modelData.action === "kitty-theme") {
+                            service.applyKittyTheme(modelData.value)
+                        } else if (modelData.action === "bar-theme") {
+                            service.applyBarTheme(modelData.value)
+                        } else {
+                            service.open(modelData.path)
+                        }
+                    }
 
                     ThemeSwatch {
-                        visible: modelData.action === "kitty-theme"
+                        visible: modelData.action !== undefined
                         background: modelData.background || ""
                         foreground: modelData.foreground || ""
-                        cursor: modelData.cursor || ""
+                        accent: modelData.accent || ""
                     }
 
                     StatePill {
-                        visible: modelData.action === "kitty-theme"
-                        text: service.pendingTheme === modelData.value && service.busy
+                        visible: modelData.action !== undefined
+                        text: service.pendingThemeFor(modelData.action) === modelData.value
+                            && service.busy
                             ? "APPLYING"
-                            : service.kittyTheme === modelData.value
+                            : service.activeTheme(modelData.action) === modelData.value
                                 ? "ACTIVE"
                                 : "APPLY"
-                        tone: service.kittyTheme === modelData.value ? "accent" : "neutral"
+                        tone: service.activeTheme(modelData.action) === modelData.value
+                            ? "accent"
+                            : "neutral"
                     }
 
                     StatePill {
-                        visible: modelData.action !== "kitty-theme"
+                        visible: modelData.action === undefined
                         text: service.pathExists(modelData.path) ? "OPEN" : "MISSING"
                         tone: service.pathExists(modelData.path) ? "accent" : "warning"
                     }

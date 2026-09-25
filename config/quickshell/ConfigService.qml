@@ -15,7 +15,10 @@ Item {
     property var kittyThemes: []
     property string kittyTheme: "unknown"
     property string pendingTheme: ""
-    readonly property bool busy: applyRunner.running
+    property var barThemes: []
+    property string barTheme: "unknown"
+    property string pendingBarTheme: ""
+    readonly property bool busy: applyRunner.running || barApplyRunner.running
     readonly property string homeDir: Quickshell.env("HOME") || "~"
 
     readonly property var fileSections: [
@@ -50,33 +53,70 @@ Item {
         }
     ]
 
-    readonly property var sections: kittyThemes.length > 0
-        ? fileSections.concat([themeSection()])
-        : fileSections
+    readonly property var sections: fileSections.concat(themeSections())
 
-    // Terminal themes come from the installed library, so the picker stays
-    // truthful when a machine ships more or fewer schemes than the repo does.
-    function themeSection() {
-        return {
-            title: "TERMINAL",
-            description: "Kitty colour theme. Open windows recolour immediately.",
-            items: kittyThemes.map(theme => ({
-                label: theme.name.replace(/_/g, " ").toUpperCase(),
-                path: theme.name === "generated"
-                    ? "~/.config/kitty/colors.conf"
-                    : "~/.config/kitty/themes/" + theme.name + ".conf",
-                action: "kitty-theme",
-                value: theme.name,
-                description: theme.name === "generated"
-                    ? "Generated from the active wallpaper palette"
-                    : "Background " + (theme.background || "unknown")
-                        + " - text " + (theme.foreground || "unknown")
-                        + " - cursor " + (theme.cursor || "unknown"),
-                background: theme.background,
-                foreground: theme.foreground,
-                cursor: theme.cursor
-            }))
+    // Theme lists come from the installed libraries, so the picker stays truthful
+    // when a machine ships more or fewer schemes than the repo does.
+    function themeSections() {
+        const found = []
+        if (kittyThemes.length > 0) {
+            found.push({
+                title: "TERMINAL",
+                description: "Kitty colour theme. Open windows recolour immediately.",
+                items: kittyThemes.map(theme => themeItem(theme, "kitty-theme", {
+                    description: theme.name === "generated"
+                        ? "Generated from the active wallpaper palette"
+                        : "Background " + (theme.background || "unknown")
+                            + " - text " + (theme.foreground || "unknown")
+                            + " - cursor " + (theme.cursor || "unknown"),
+                    accent: theme.cursor
+                }))
+            })
         }
+        if (barThemes.length > 0) {
+            found.push({
+                title: "STATUS BAR",
+                description: "Waybar theme. The bar reloads without restarting.",
+                items: barThemes.map(theme => themeItem(theme, "bar-theme", {
+                    description: theme.name === "kome"
+                        ? "Default kome bar surface"
+                        : "Palette " + (theme.background || "unknown")
+                            + " - accent " + (theme.accent || "unknown"),
+                    accent: theme.accent
+                }))
+            })
+        }
+        return found
+    }
+
+    function themeItem(theme, action, extra) {
+        return Object.assign({
+            label: theme.name.replace(/_/g, " ").toUpperCase(),
+            path: themePath(action, theme.name),
+            action: action,
+            value: theme.name,
+            background: theme.background,
+            foreground: theme.foreground
+        }, extra)
+    }
+
+    function themePath(action, name) {
+        if (action === "bar-theme") {
+            return name === "kome"
+                ? "~/.config/waybar/bar-theme.css"
+                : "~/.config/waybar/themes/" + name + ".css"
+        }
+        return name === "generated"
+            ? "~/.config/kitty/colors.conf"
+            : "~/.config/kitty/themes/" + name + ".conf"
+    }
+
+    function activeTheme(action) {
+        return action === "bar-theme" ? service.barTheme : service.kittyTheme
+    }
+
+    function pendingThemeFor(action) {
+        return action === "bar-theme" ? service.pendingBarTheme : service.pendingTheme
     }
 
     function refreshKittyThemes() {
@@ -86,18 +126,46 @@ Item {
         themeCurrentRunner.running = true
     }
 
+    function refreshBarThemes() {
+        barListRunner.command = ["kome-bar-theme", "list", "--json"]
+        barListRunner.running = true
+        barCurrentRunner.command = ["kome-bar-theme", "current"]
+        barCurrentRunner.running = true
+    }
+
+    function refreshThemes() {
+        service.refreshKittyThemes()
+        service.refreshBarThemes()
+    }
+
     function applyKittyTheme(name) {
+        service.applyTheme("kitty-theme", name)
+    }
+
+    function applyBarTheme(name) {
+        service.applyTheme("bar-theme", name)
+    }
+
+    function applyTheme(action, name) {
         if (service.busy) {
-            service.statusText = "A terminal theme change is already running"
+            service.statusText = "A theme change is already running"
             return
         }
-        service.pendingTheme = name
+        const isBar = action === "bar-theme"
+        const runner = isBar ? barApplyRunner : applyRunner
+        const tool = isBar ? "kome-bar-theme" : "kome-kitty-theme"
+        const fallback = isBar ? "kome" : "generated"
+        if (isBar) {
+            service.pendingBarTheme = name
+        } else {
+            service.pendingTheme = name
+        }
         service.statusText = "Applying " + name.replace(/_/g, " ")
-        applyRunner.command = name === "generated"
-            ? ["kome-kitty-theme", "reset"]
-            : ["kome-kitty-theme", "apply", name]
+        runner.command = name === fallback
+            ? [tool, "reset"]
+            : [tool, "apply", name]
         applyWatchdog.restart()
-        applyRunner.running = true
+        runner.running = true
     }
 
     function resolve(path) {
@@ -230,17 +298,87 @@ Item {
         }
     }
 
+    Process {
+        id: barListRunner
+        stdout: StdioCollector {
+            onStreamFinished: {
+                try {
+                    const parsed = JSON.parse(text)
+                    service.barThemes = Array.isArray(parsed) ? parsed : []
+                } catch (error) {
+                    service.barThemes = []
+                    service.statusText = "Could not read bar themes"
+                }
+            }
+        }
+        stderr: StdioCollector {
+            onStreamFinished: if (text.trim().length > 0) {
+                service.barThemes = []
+                service.statusText = "Bar themes unavailable"
+            }
+        }
+        onExited: exitCode => {
+            if (exitCode !== 0) {
+                service.barThemes = []
+                service.statusText = "Bar themes unavailable"
+            }
+        }
+    }
+
+    Process {
+        id: barCurrentRunner
+        stdout: StdioCollector {
+            onStreamFinished: {
+                const value = text.trim()
+                if (value.length > 0) service.barTheme = value
+            }
+        }
+        stderr: StdioCollector {
+            onStreamFinished: if (text.trim().length > 0) {
+                service.barTheme = "unknown"
+            }
+        }
+    }
+
+    Process {
+        id: barApplyRunner
+        stdout: StdioCollector {
+            onStreamFinished: {
+                const output = text.trim()
+                if (output.length > 0) service.statusText = output
+            }
+        }
+        stderr: StdioCollector {
+            onStreamFinished: if (text.trim().length > 0) {
+                service.statusText = text.trim()
+            }
+        }
+        onExited: exitCode => {
+            const label = service.pendingBarTheme.replace(/_/g, " ")
+            service.statusText = exitCode === 0 ? label + " applied" : label + " failed"
+            service.pendingBarTheme = ""
+            applyWatchdog.stop()
+            service.refreshBarThemes()
+        }
+    }
+
     // A Process whose binary is missing never reports an exit, so the busy state
     // and the empty picker need a deadline instead of waiting on onExited.
     Timer {
         id: applyWatchdog
         interval: 8000
         onTriggered: {
-            if (!applyRunner.running) return
-            applyRunner.running = false
-            service.statusText = "Terminal theme change timed out"
-            service.pendingTheme = ""
-            service.refreshKittyThemes()
+            if (applyRunner.running) {
+                applyRunner.running = false
+                service.statusText = "Terminal theme change timed out"
+                service.pendingTheme = ""
+                service.refreshKittyThemes()
+            } else if (barApplyRunner.running) {
+                barApplyRunner.running = false
+                service.statusText = "Bar theme change timed out"
+                service.pendingBarTheme = ""
+                service.refreshBarThemes()
+            }
         }
     }
 
@@ -248,11 +386,13 @@ Item {
         interval: 3000
         onTriggered: if (service.kittyThemes.length === 0 && !service.busy) {
             service.statusText = "Terminal themes unavailable"
+        } else if (service.barThemes.length === 0 && !service.busy) {
+            service.statusText = "Bar themes unavailable"
         }
     }
 
     Component.onCompleted: {
         service.checkFiles()
-        service.refreshKittyThemes()
+        service.refreshThemes()
     }
 }

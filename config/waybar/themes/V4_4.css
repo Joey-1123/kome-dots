@@ -1,0 +1,42 @@
+/* Adapted from HANCORE-linux/waybar-themes V4.4 (MIT), drdeltree.
+ * Upstream: bold 2px outlines around every group. The Omarchy gradient bar and
+ * colour import are dropped so kome keeps its transparent bar; the outline is
+ * the theme's signature.
+ * kome-bar-theme: accent=#ffb4ab */
+
+* {
+    font-size: 12px;
+    font-weight: bold;
+    min-height: 0px;
+}
+
+window#waybar {
+    background: transparent;
+    color: @fg;
+    transition-duration: 0.5s;
+}
+
+.modules-left,
+.modules-center,
+.modules-right {
+    color: @fg;
+    background-color: alpha(@surface, 0.9);
+    border: 2px solid alpha(@fg, 0.8);
+    border-radius: 16px;
+    opacity: 0.95;
+    margin: 0px 0px 2px 0px;
+    padding: 0 6px;
+}
+
+.modules-left {
+    margin-left: 4px;
+}
+
+.modules-right {
+    margin-right: 4px;
+}
+
+#custom-power {
+    color: #ffb4ab;
+    font-size: 14px;
+}

@@ -1,0 +1,200 @@
+#!/usr/bin/env bash
+# kome-bar-theme — list and apply the vendored Waybar theme sheets.
+set -euo pipefail
+
+WAYBAR_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/waybar"
+THEME_DIR="$WAYBAR_DIR/themes"
+ACTIVE_THEME="$WAYBAR_DIR/bar-theme.css"
+GENERATED_THEME="$WAYBAR_DIR/theme.css"
+
+usage() {
+    cat <<'EOF'
+kome-bar-theme — manage Waybar bar themes
+
+Usage:
+  kome-bar-theme list [--json]
+  kome-bar-theme current
+  kome-bar-theme apply <theme>
+  kome-bar-theme reset
+  kome-bar-theme path <theme>
+EOF
+}
+
+list_themes() {
+    if [[ ! -d "$THEME_DIR" ]]; then
+        return 0
+    fi
+    find -L "$THEME_DIR" -maxdepth 1 -type f -name '*.css' -printf '%f\n' \
+        | sed 's/\.css$//' \
+        | sort
+}
+
+# value_of <file> <key> — read one #rrggbb from a generated palette, accepting
+# both `@define-color key #hex;` and `--key: #hex;` spellings.
+value_of() {
+    local value=""
+    if [[ -f "$1" ]]; then
+        value="$(sed -n -E \
+            -e "s/^[[:space:]]*@define-color[[:space:]]+$2[[:space:]]+(#[0-9a-fA-F]{6}).*/\1/p" \
+            -e "s/^[[:space:]]*--$2[[:space:]]*:[[:space:]]*(#[0-9a-fA-F]{6}).*/\1/p" \
+            "$1" | head -1)"
+    fi
+    printf '%s' "$value"
+}
+
+# has_rules <file> — true when the sheet carries any rule outside comments, so an
+# override file that only documents itself still counts as the kome default.
+has_rules() {
+    awk '
+        {
+            rest = $0
+            out = ""
+            while (1) {
+                if (comment) {
+                    i = index(rest, "*/")
+                    if (i == 0) { rest = ""; break }
+                    rest = substr(rest, i + 2)
+                    comment = 0
+                } else {
+                    i = index(rest, "/*")
+                    if (i == 0) break
+                    out = out substr(rest, 1, i - 1)
+                    rest = substr(rest, i + 2)
+                    comment = 1
+                }
+            }
+            if (!comment) out = out rest
+            if (out ~ /[^ \t]/) print out
+        }
+    ' "$1" | grep -Eq '^[[:space:]]*[^[:space:]]'
+}
+
+# accent_of <file> — the kome-bar-theme marker, falling back to the first hex.
+accent_of() {
+    local value
+    value="$(sed -n -E 's/.*kome-bar-theme:[[:space:]]*accent=(#[0-9a-fA-F]{6}).*/\1/p' "$1" | head -1)"
+    if [[ -z "$value" ]]; then
+        value="$(grep -oE '#[0-9a-fA-F]{6}' "$1" | head -1)"
+    fi
+    printf '%s' "$value"
+}
+
+# list_themes_json — the kome default first, then every vendored theme.
+list_themes_json() {
+    printf '[{"name":"kome","background":"%s","foreground":"%s","accent":"%s"}' \
+        "$(value_of "$GENERATED_THEME" bg)" \
+        "$(value_of "$GENERATED_THEME" fg)" \
+        "$(value_of "$GENERATED_THEME" primary)"
+    local name file
+    while IFS= read -r name; do
+        file="$THEME_DIR/$name.css"
+        printf ',{"name":"%s","background":"%s","foreground":"%s","accent":"%s"}' \
+            "$name" \
+            "$(value_of "$GENERATED_THEME" bg)" \
+            "$(value_of "$GENERATED_THEME" fg)" \
+            "$(accent_of "$file")"
+    done < <(list_themes)
+    printf ']\n'
+}
+
+# current_theme — the default is an override sheet with no rules of its own.
+current_theme() {
+    local file="$ACTIVE_THEME" target
+    if [[ -L "$file" ]]; then
+        target="$(readlink -f "$file" 2>/dev/null || true)"
+        [[ -n "$target" ]] && file="$target"
+    fi
+    [[ -f "$file" ]] || { printf '%s\n' unknown; return 0; }
+    if [[ "$(basename "$(dirname "$file")")" == "themes" ]]; then
+        basename "$file" .css
+    elif has_rules "$file"; then
+        printf '%s\n' unknown
+    else
+        printf '%s\n' kome
+    fi
+}
+
+validate_theme() {
+    local name="$1"
+    [[ "$name" =~ ^[A-Za-z0-9_.-]+$ ]] || {
+        printf 'invalid theme name: %s\n' "$name" >&2
+        return 1
+    }
+    [[ -f "$THEME_DIR/$name.css" ]] || {
+        printf 'unknown theme: %s\n' "$name" >&2
+        printf 'available themes:\n' >&2
+        list_themes >&2
+        return 1
+    }
+}
+
+# reload_bar — waybar reads style.css on SIGUSR2; without it a running bar
+# keeps the previous sheet until the next restart.
+reload_bar() {
+    if pgrep -x waybar >/dev/null 2>&1; then
+        pkill -SIGUSR2 -x waybar 2>/dev/null || true
+        return 0
+    fi
+    return 1
+}
+
+apply_theme() {
+    local name="$1"
+    validate_theme "$name"
+    mkdir -p "$WAYBAR_DIR"
+    ln -sfn "$THEME_DIR/$name.css" "$ACTIVE_THEME"
+    if reload_bar; then
+        printf 'applied %s and reloaded the bar\n' "$name"
+    else
+        printf 'applied %s for the next bar start\n' "$name"
+    fi
+}
+
+reset_theme() {
+    mkdir -p "$WAYBAR_DIR"
+    rm -f "$ACTIVE_THEME"
+    {
+        printf '%s\n' '/* kome bar theme: the verified default.'
+        printf '%s\n' '   Empty on purpose - style.css already carries the kome surface, so this file'
+        printf '%s\n' "   only needs to exist as the override slot. kome-bar-theme reset restores it," \
+        printf '%s\n' '   and a vendored theme replaces it with its own rules. */'
+    } >"$ACTIVE_THEME"
+    if reload_bar; then
+        printf '%s\n' 'reset to the kome bar theme and reloaded the bar'
+    else
+        printf '%s\n' 'reset to the kome bar theme for the next bar start'
+    fi
+}
+
+case "${1:-list}" in
+list)
+    if [[ "${2:-}" == "--json" ]]; then
+        list_themes_json
+    else
+        list_themes
+    fi
+    ;;
+current)
+    current_theme
+    ;;
+apply)
+    [[ $# -eq 2 ]] || { usage >&2; exit 1; }
+    apply_theme "$2"
+    ;;
+reset)
+    [[ $# -eq 1 ]] || { usage >&2; exit 1; }
+    reset_theme
+    ;;
+path)
+    [[ $# -eq 2 ]] || { usage >&2; exit 1; }
+    validate_theme "$2"
+    printf '%s\n' "$THEME_DIR/$2.css"
+    ;;
+help|-h|--help)
+    usage
+    ;;
+*)
+    usage >&2
+    exit 1
+    ;;
+esac

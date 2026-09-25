@@ -1,18 +1,19 @@
 import QtQuick
 
-// A miniature terminal painted with a theme's own background, text, and cursor
-// colours. Colours arrive as "#rrggbb" strings from kome-kitty-theme; an empty
-// value falls back to a shared token so a theme without colours stays readable.
+// A miniature terminal painted with a theme's own background, text, and accent
+// colours (the kitty cursor, the bar highlight). Colours arrive as "#rrggbb"
+// strings from kome-kitty-theme and kome-bar-theme; an empty value falls back to
+// a shared token so a theme without colours stays readable.
 Rectangle {
     id: swatch
 
     property string background: ""
     property string foreground: ""
-    property string cursor: ""
+    property string accent: ""
 
     readonly property color backgroundColor: paint(background, Theme.alpha(Theme.textDim, 0.18))
     readonly property color foregroundColor: paint(foreground, Theme.textDim)
-    readonly property color cursorColor: paint(cursor, Theme.accent)
+    readonly property color accentColor: paint(accent, Theme.accent)
 
     function paint(value, fallback) {
         return value && value.length > 0 ? value : fallback
@@ -49,6 +50,6 @@ Rectangle {
         width: 3
         height: 5
         radius: 1
-        color: cursorColor
+        color: accentColor
     }
 }

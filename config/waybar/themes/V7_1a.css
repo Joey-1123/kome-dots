@@ -1,0 +1,33 @@
+/* Adapted from HANCORE-linux/waybar-themes V7.1a (MIT), drdeltree.
+ * Upstream: island version with 20px pills, a 30px bar height, and no borders.
+ * The Omarchy colour import is dropped; kome's generated palette supplies the
+ * colours and the groups stay taller and rounder than the kome default.
+ * kome-bar-theme: accent=#b5c4ff */
+
+* {
+    font-size: 12px;
+    border: none;
+    border-radius: 0;
+}
+
+window#waybar {
+    background: transparent;
+}
+
+#waybar > box {
+    min-height: 30px;
+}
+
+.modules-left,
+.modules-center,
+.modules-right {
+    background-color: alpha(@surface, 0.9);
+    border: none;
+    border-radius: 20px;
+    margin: 6px 5px;
+    padding: 0 5px;
+}
+
+#clock {
+    color: @primary;
+}

@@ -1,0 +1,42 @@
+/* Adapted from HANCORE-linux/waybar-themes V6.cd (MIT), drdeltree.
+ * Upstream: flat bar with square corners and a hairline underline. The Omarchy
+ * colour import is dropped; the underline uses kome's generated outline colour.
+ * kome-bar-theme: accent=#8f909a */
+
+* {
+    font-size: 12px;
+    font-weight: bold;
+    border: none;
+    padding: 0px;
+    transition: background-color 0.3s ease-out;
+}
+
+window#waybar {
+    background-color: transparent;
+}
+
+.modules-left,
+.modules-center,
+.modules-right {
+    background-color: alpha(@surface, 0.8);
+    border: none;
+    border-bottom: 1.5px solid alpha(@outline, 0.6);
+    border-radius: 0px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+    margin: 0px 0px 2px 0px;
+    padding: 0 6px;
+    min-height: 24px;
+}
+
+.modules-left {
+    margin-left: 4px;
+}
+
+.modules-right {
+    margin-right: 4px;
+}
+
+#clock {
+    color: @fg;
+    font-weight: bold;
+}

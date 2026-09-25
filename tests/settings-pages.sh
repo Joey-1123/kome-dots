@@ -396,15 +396,20 @@ else
 fi
 if grep -Fq 'ThemeSwatch {' "$configs_page" \
     && grep -Fq 'applyKittyTheme' "$configs_page" \
-    && grep -Fq 'selected: modelData.action === "kitty-theme"' "$configs_page" \
+    && grep -Fq 'applyBarTheme' "$configs_page" \
+    && grep -Fq 'service.activeTheme(modelData.action)' "$configs_page" \
     && grep -Fq 'function applyKittyTheme(name)' "$config_service" \
+    && grep -Fq 'function applyBarTheme(name)' "$config_service" \
+    && grep -Fq 'function activeTheme(action)' "$config_service" \
     && grep -Fq '"kome-kitty-theme"' "$config_service" \
+    && grep -Fq '"kome-bar-theme"' "$config_service" \
     && grep -Fq 'list' "$config_service" \
     && grep -Fq 'json' "$config_service" \
-    && grep -Fq 'title: "TERMINAL"' "$config_service"; then
-    pass "Configs page offers a terminal theme picker with a selected state"
+    && grep -Fq 'title: "TERMINAL"' "$config_service" \
+    && grep -Fq 'title: "STATUS BAR"' "$config_service"; then
+    pass "Configs page offers terminal and bar theme pickers with a selected state"
 else
-    fail "Configs page offers a terminal theme picker with a selected state"
+    fail "Configs page offers terminal and bar theme pickers with a selected state"
 fi
 if grep -Fq 'Theme.alpha(Theme.textDim, 0.18)' "$ROOT/config/quickshell/ThemeSwatch.qml" \
     && grep -Fq 'Theme.border' "$ROOT/config/quickshell/ThemeSwatch.qml"; then
