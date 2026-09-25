@@ -12,7 +12,7 @@ usage() {
 kome-kitty-theme — manage Kitty color themes
 
 Usage:
-  kome-kitty-theme list
+  kome-kitty-theme list [--json]
   kome-kitty-theme current
   kome-kitty-theme apply <theme>
   kome-kitty-theme reset
@@ -29,24 +29,64 @@ list_themes() {
         | sort
 }
 
-current_theme() {
-    if [[ -L "$ACTIVE_THEME" ]]; then
-        local target
-        target="$(readlink -f "$ACTIVE_THEME" 2>/dev/null || true)"
-        if [[ -n "$target" && -f "$target" ]]; then
-            if grep -Fq 'include colors.conf' "$target"; then
-                printf '%s\n' generated
-            else
-                basename "$target" .conf
-            fi
+# color_of <file> <key> — read one #rrggbb value from a kitty colour file.
+color_of() {
+    local value=""
+    if [[ -f "$1" ]]; then
+        value="$(sed -n -E "s/^[[:space:]]*$2[[:space:]]+(#[0-9a-fA-F]{6}).*/\1/p" "$1" | head -1)"
+    fi
+    printf '%s' "$value"
+}
+
+# list_themes_json — the generated palette first, then every vendored theme.
+list_themes_json() {
+    printf '[{"name":"generated","background":"%s","foreground":"%s","cursor":"%s"}' \
+        "$(color_of "$GENERATED_COLORS" background)" \
+        "$(color_of "$GENERATED_COLORS" foreground)" \
+        "$(color_of "$GENERATED_COLORS" cursor)"
+    local name file
+    while IFS= read -r name; do
+        file="$THEME_DIR/$name.conf"
+        printf ',{"name":"%s","background":"%s","foreground":"%s","cursor":"%s"}' \
+            "$name" \
+            "$(color_of "$file" background)" \
+            "$(color_of "$file" foreground)" \
+            "$(color_of "$file" cursor)"
+    done < <(list_themes)
+    printf ']\n'
+}
+
+# resolve_active — follow theme.conf symlinks and include directives.
+resolve_active() {
+    local file="$ACTIVE_THEME" target include next depth=0 found=0
+    while [[ $depth -lt 4 ]]; do
+        if [[ -L "$file" ]]; then
+            target="$(readlink -f "$file" 2>/dev/null || true)"
+            [[ -n "$target" && -f "$target" ]] || break
+            file="$target"
+        fi
+        [[ -f "$file" ]] || break
+        found=1
+        if [[ "$(basename "$(dirname "$file")")" == "themes" ]]; then
+            basename "$file" .conf
             return 0
         fi
-    fi
-    if [[ -f "$ACTIVE_THEME" ]] && grep -Fq 'include colors.conf' "$ACTIVE_THEME"; then
+        include="$(sed -n -E 's/^[[:space:]]*include[[:space:]]+([^[:space:]]+).*/\1/p' "$file" | tail -1)"
+        [[ -n "$include" ]] || break
+        case "$include" in
+            /*) next="$include" ;;
+            *) next="$(dirname "$file")/$include" ;;
+        esac
+        file="$next"
+        depth=$((depth + 1))
+    done
+    # A theme.conf with no include carries no colours, so kitty.conf keeps the
+    # generated palette it already included; a missing theme.conf is unknown.
+    if [[ $found -eq 1 ]]; then
         printf '%s\n' generated
-        return 0
+    else
+        printf '%s\n' unknown
     fi
-    printf '%s\n' unknown
 }
 
 validate_theme() {
@@ -79,10 +119,11 @@ apply_theme() {
 reset_theme() {
     mkdir -p "$KITTY_DIR"
     rm -f "$ACTIVE_THEME"
-    {
-        printf '%s\n' '# Default Kitty theme: use the active Kome/matugen palette.'
-        printf '%s\n' 'include colors.conf'
-    } >"$ACTIVE_THEME"
+    # No include here: kitty.conf already included colors.conf, and including it
+    # twice is a config error.
+    printf '%s\n' \
+        '# Generated Kome palette: kitty.conf includes colors.conf directly.' \
+        >"$ACTIVE_THEME"
     if command -v kitty >/dev/null 2>&1 && [[ -f "$GENERATED_COLORS" ]] \
         && kitty @ set-colors --all --configured "$GENERATED_COLORS" >/dev/null 2>&1; then
         printf '%s\n' 'reset to the generated Kome palette'
@@ -93,10 +134,14 @@ reset_theme() {
 
 case "${1:-list}" in
 list)
-    list_themes
+    if [[ "${2:-}" == "--json" ]]; then
+        list_themes_json
+    else
+        list_themes
+    fi
     ;;
 current)
-    current_theme
+    resolve_active
     ;;
 apply)
     [[ $# -eq 2 ]] || { usage >&2; exit 1; }

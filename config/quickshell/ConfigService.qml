@@ -12,9 +12,13 @@ Item {
     property string statusText: "Ready"
     property var availability: ({})
     property bool checked: false
+    property var kittyThemes: []
+    property string kittyTheme: "unknown"
+    property string pendingTheme: ""
+    readonly property bool busy: applyRunner.running
     readonly property string homeDir: Quickshell.env("HOME") || "~"
 
-    readonly property var sections: [
+    readonly property var fileSections: [
         {
             title: "HYPRLAND",
             description: "Compositor, input, rules, and monitor behavior",
@@ -45,6 +49,56 @@ Item {
             ]
         }
     ]
+
+    readonly property var sections: kittyThemes.length > 0
+        ? fileSections.concat([themeSection()])
+        : fileSections
+
+    // Terminal themes come from the installed library, so the picker stays
+    // truthful when a machine ships more or fewer schemes than the repo does.
+    function themeSection() {
+        return {
+            title: "TERMINAL",
+            description: "Kitty colour theme. Open windows recolour immediately.",
+            items: kittyThemes.map(theme => ({
+                label: theme.name.replace(/_/g, " ").toUpperCase(),
+                path: theme.name === "generated"
+                    ? "~/.config/kitty/colors.conf"
+                    : "~/.config/kitty/themes/" + theme.name + ".conf",
+                action: "kitty-theme",
+                value: theme.name,
+                description: theme.name === "generated"
+                    ? "Generated from the active wallpaper palette"
+                    : "Background " + (theme.background || "unknown")
+                        + " - text " + (theme.foreground || "unknown")
+                        + " - cursor " + (theme.cursor || "unknown"),
+                background: theme.background,
+                foreground: theme.foreground,
+                cursor: theme.cursor
+            }))
+        }
+    }
+
+    function refreshKittyThemes() {
+        themeListRunner.command = ["kome-kitty-theme", "list", "--json"]
+        themeListRunner.running = true
+        themeCurrentRunner.command = ["kome-kitty-theme", "current"]
+        themeCurrentRunner.running = true
+    }
+
+    function applyKittyTheme(name) {
+        if (service.busy) {
+            service.statusText = "A terminal theme change is already running"
+            return
+        }
+        service.pendingTheme = name
+        service.statusText = "Applying " + name.replace(/_/g, " ")
+        applyRunner.command = name === "generated"
+            ? ["kome-kitty-theme", "reset"]
+            : ["kome-kitty-theme", "apply", name]
+        applyWatchdog.restart()
+        applyRunner.running = true
+    }
 
     function resolve(path) {
         if (path.indexOf("~/") === 0) return homeDir + path.slice(1)
@@ -112,5 +166,93 @@ Item {
         }
     }
 
-    Component.onCompleted: service.checkFiles()
+    Process {
+        id: themeListRunner
+        stdout: StdioCollector {
+            onStreamFinished: {
+                try {
+                    const parsed = JSON.parse(text)
+                    service.kittyThemes = Array.isArray(parsed) ? parsed : []
+                } catch (error) {
+                    service.kittyThemes = []
+                    service.statusText = "Could not read terminal themes"
+                }
+            }
+        }
+        stderr: StdioCollector {
+            onStreamFinished: if (text.trim().length > 0) {
+                service.kittyThemes = []
+                service.statusText = "Terminal themes unavailable"
+            }
+        }
+        onExited: exitCode => {
+            if (exitCode !== 0) {
+                service.kittyThemes = []
+                service.statusText = "Terminal themes unavailable"
+            }
+        }
+    }
+
+    Process {
+        id: themeCurrentRunner
+        stdout: StdioCollector {
+            onStreamFinished: {
+                const value = text.trim()
+                if (value.length > 0) service.kittyTheme = value
+            }
+        }
+        stderr: StdioCollector {
+            onStreamFinished: if (text.trim().length > 0) {
+                service.kittyTheme = "unknown"
+            }
+        }
+    }
+
+    Process {
+        id: applyRunner
+        stdout: StdioCollector {
+            onStreamFinished: {
+                const output = text.trim()
+                if (output.length > 0) service.statusText = output
+            }
+        }
+        stderr: StdioCollector {
+            onStreamFinished: if (text.trim().length > 0) {
+                service.statusText = text.trim()
+            }
+        }
+        onExited: exitCode => {
+            const label = service.pendingTheme.replace(/_/g, " ")
+            service.statusText = exitCode === 0 ? label + " applied" : label + " failed"
+            service.pendingTheme = ""
+            applyWatchdog.stop()
+            service.refreshKittyThemes()
+        }
+    }
+
+    // A Process whose binary is missing never reports an exit, so the busy state
+    // and the empty picker need a deadline instead of waiting on onExited.
+    Timer {
+        id: applyWatchdog
+        interval: 8000
+        onTriggered: {
+            if (!applyRunner.running) return
+            applyRunner.running = false
+            service.statusText = "Terminal theme change timed out"
+            service.pendingTheme = ""
+            service.refreshKittyThemes()
+        }
+    }
+
+    Timer {
+        interval: 3000
+        onTriggered: if (service.kittyThemes.length === 0 && !service.busy) {
+            service.statusText = "Terminal themes unavailable"
+        }
+    }
+
+    Component.onCompleted: {
+        service.checkFiles()
+        service.refreshKittyThemes()
+    }
 }

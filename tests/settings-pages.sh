@@ -36,6 +36,7 @@ component_contract NetworkHero.qml "shared active network summary"
 component_contract ConfirmDialog.qml "shared confirmation overlay"
 component_contract StorageUsage.qml "shared filesystem usage visualization"
 component_contract ConfigService.qml "shared config launcher service"
+component_contract ThemeSwatch.qml "shared terminal theme swatch"
 component_contract ShortcutService.qml "shared keybind reference service"
 component_contract KomeDesktopControls.qml "Kome desktop controls surface"
 component_contract KomeSessionControls.qml "Kome session controls surface"
@@ -392,6 +393,24 @@ if grep -Eq 'marginRight|sliderMarginRight|#[0-9a-fA-F]{6,8}' "$configs_page"; t
     fail "Configs page uses shared layout and semantic tokens"
 else
     pass "Configs page uses shared layout and semantic tokens"
+fi
+if grep -Fq 'ThemeSwatch {' "$configs_page" \
+    && grep -Fq 'applyKittyTheme' "$configs_page" \
+    && grep -Fq 'selected: modelData.action === "kitty-theme"' "$configs_page" \
+    && grep -Fq 'function applyKittyTheme(name)' "$config_service" \
+    && grep -Fq '"kome-kitty-theme"' "$config_service" \
+    && grep -Fq 'list' "$config_service" \
+    && grep -Fq 'json' "$config_service" \
+    && grep -Fq 'title: "TERMINAL"' "$config_service"; then
+    pass "Configs page offers a terminal theme picker with a selected state"
+else
+    fail "Configs page offers a terminal theme picker with a selected state"
+fi
+if grep -Fq 'Theme.alpha(Theme.textDim, 0.18)' "$ROOT/config/quickshell/ThemeSwatch.qml" \
+    && grep -Fq 'Theme.border' "$ROOT/config/quickshell/ThemeSwatch.qml"; then
+    pass "Terminal theme swatch falls back to shared tokens for missing colors"
+else
+    fail "Terminal theme swatch falls back to shared tokens for missing colors"
 fi
 
 shortcuts_page="$ROOT/config/quickshell/SettingsPages/ShortcutsPage.qml"

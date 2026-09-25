@@ -140,6 +140,26 @@ else
     fail "kome-kitty-theme applies and resets a theme"
 fi
 rm -rf "$kitty_iso"
+if grep -Fq 'include themes/Bright_Lights.conf' "$ROOT/config/kitty/theme.conf" \
+    && [[ -f "$ROOT/config/kitty/themes/Bright_Lights.conf" ]]; then
+    pass "Kitty defaults to the Bright Lights theme"
+else
+    fail "Kitty defaults to the Bright Lights theme"
+fi
+kitty_iso="$(mktemp -d)"
+mkdir -p "$kitty_iso/kitty/themes"
+cp "$ROOT/config/kitty/themes/Bright_Lights.conf" "$kitty_iso/kitty/themes/"
+cp "$ROOT/config/kitty/theme.conf" "$kitty_iso/kitty/theme.conf"
+if [[ "$(XDG_CONFIG_HOME="$kitty_iso" "$ROOT/scripts/kome-kitty-theme" current)" == 'Bright_Lights' ]] \
+    && XDG_CONFIG_HOME="$kitty_iso" "$ROOT/scripts/kome-kitty-theme" list --json 2>/dev/null \
+        | grep -Fq '"name":"Bright_Lights"' \
+    && XDG_CONFIG_HOME="$kitty_iso" "$ROOT/scripts/kome-kitty-theme" list --json 2>/dev/null \
+        | grep -Fq '"background":"#191919"'; then
+    pass "kome-kitty-theme resolves the included default and lists themes as json"
+else
+    fail "kome-kitty-theme resolves the included default and lists themes as json"
+fi
+rm -rf "$kitty_iso"
 if grep -Fq 'inner_color = rgba({{colors.surface.default.hex_stripped}}00)' \
     "$ROOT/config/matugen/templates/hyprlock-colors.conf" \
     && grep -Fq 'outer_color = rgba({{colors.on_surface.default.hex_stripped}}aa)' \

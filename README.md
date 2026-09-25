@@ -159,19 +159,21 @@ kome-wallpaper random        # random from mode dir
 
 ### Terminal themes
 
-Kitty ships a vendored, MIT-licensed theme library in `config/kitty/themes`. The
-generated Kome palette is the default; a curated theme overrides it when
-selected. Running windows are recoloured over remote control when available.
+Kitty ships a vendored, MIT-licensed theme library in `config/kitty/themes`, and
+defaults to **Bright Lights** (`#191919` background, `#f34a00` cursor). The
+**Configs** page of the settings hub lists every installed scheme with a preview
+swatch; picking one recolours open Kitty windows over remote control.
 
 ```bash
 kome-kitty-theme list              # available themes
+kome-kitty-theme list --json       # name plus background, text, and cursor
 kome-kitty-theme current           # generated | <theme>
 kome-kitty-theme apply Dracula     # switch theme
 kome-kitty-theme reset             # back to the generated palette
 ```
 
 Re-running `./install.sh` re-links `theme.conf` and returns Kitty to the
-generated palette.
+Bright Lights default.
 
 ## Provider Overrides
 

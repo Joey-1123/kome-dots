@@ -5,9 +5,9 @@ SettingsPage {
     id: page
 
     title: "CONFIGS"
-    subtitle: "Open the files that shape your desktop"
+    subtitle: "Open the files that shape your desktop, pick the terminal theme"
     statusText: service.statusText.toUpperCase()
-    busy: false
+    busy: service.busy
 
     property string searchText: ""
     onSearchTextChanged: resetScroll()
@@ -40,13 +40,39 @@ SettingsPage {
                     required property var modelData
                     width: parent.width
                     label: modelData.label
-                    description: service.pathExists(modelData.path)
-                        ? modelData.path
-                        : modelData.path + " · not installed"
-                    clickable: service.pathExists(modelData.path)
-                    onClicked: service.open(modelData.path)
+                    description: modelData.action === "kitty-theme"
+                        ? modelData.description
+                        : service.pathExists(modelData.path)
+                            ? modelData.path
+                            : modelData.path + " · not installed"
+                    selected: modelData.action === "kitty-theme"
+                        && service.kittyTheme === modelData.value
+                    clickable: modelData.action === "kitty-theme"
+                        ? !service.busy
+                        : service.pathExists(modelData.path)
+                    onClicked: modelData.action === "kitty-theme"
+                        ? service.applyKittyTheme(modelData.value)
+                        : service.open(modelData.path)
+
+                    ThemeSwatch {
+                        visible: modelData.action === "kitty-theme"
+                        background: modelData.background || ""
+                        foreground: modelData.foreground || ""
+                        cursor: modelData.cursor || ""
+                    }
 
                     StatePill {
+                        visible: modelData.action === "kitty-theme"
+                        text: service.pendingTheme === modelData.value && service.busy
+                            ? "APPLYING"
+                            : service.kittyTheme === modelData.value
+                                ? "ACTIVE"
+                                : "APPLY"
+                        tone: service.kittyTheme === modelData.value ? "accent" : "neutral"
+                    }
+
+                    StatePill {
+                        visible: modelData.action !== "kitty-theme"
                         text: service.pathExists(modelData.path) ? "OPEN" : "MISSING"
                         tone: service.pathExists(modelData.path) ? "accent" : "warning"
                     }
