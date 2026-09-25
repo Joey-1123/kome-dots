@@ -69,6 +69,13 @@ start_all() {
         swayosd) start_component "swayosd-server" "swayosd-server" ;;
     esac
 
+    # quickshell root shell: volume OSD, settings control centre, and the
+    # hot-corner triggers. Skipped when quickshell is the bar, since that
+    # provider owns shell.qml itself.
+    if [[ "${KOME_BAR:-waybar}" != "quickshell" ]] && command -v qs >/dev/null 2>&1; then
+        start_component "quickshell" "qs"
+    fi
+
     # network tray applet — provides the clickable wifi/ethernet UI
     if command -v nm-applet >/dev/null 2>&1; then
         start_component "nm-applet" "nm-applet"
@@ -127,6 +134,8 @@ stop_all() {
         waybar)     pkill waybar 2>/dev/null || true ;;
         quickshell) pkill quickshell 2>/dev/null || true ;;
     esac
+    # the root quickshell (settings/OSD/hot corners) when the bar isn't using it
+    pkill -f "qs$" 2>/dev/null || true
     pkill swayosd-server 2>/dev/null || true
     pkill nm-applet 2>/dev/null || true
     case "${KOME_IDLE:-hypridle}" in

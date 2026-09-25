@@ -90,6 +90,7 @@ migrate_generated() {
         "${HOME}/.config/gtk-4.0/gtk.css" \
         "${HOME}/.config/hypr/hyprlock-colors.conf" \
         "${HOME}/.config/cava/config" \
+        "${HOME}/.config/quickshell/Theme.qml" \
     ; do
         if [[ -L "$out" && ! -e "$out" ]]; then
             rm -f "$out"
@@ -362,4 +363,4 @@ case "${1:-}" in
     current) cmd_current ;;
     schedule) shift; cmd_schedule "$@" ;;
     *) usage; exit 1 ;;
-esac
+esac                                                 

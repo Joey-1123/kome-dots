@@ -34,11 +34,16 @@ hl.config({
         },
 
         blur = {
-            enabled = true,
-            size = 6,
-            passes = 2,
-            vibrancy = 0.2,
-            xray = true,
+            -- Blur renders the whole screen unreadable on this machine
+            -- (Intel HD 620, software GL). Off by default; set true on
+            -- hardware where the blur pass is handled properly.
+            enabled = false,
+            size = 4,
+            passes = 1,
+            vibrancy = 0.0,
+            -- xray blurs everything behind the window including the window
+            -- itself. Never enable both of these at once.
+            xray = false,
         },
     },
 

@@ -56,3 +56,7 @@ output_path = '~/.config/hypr/hyprlock-colors.conf'
 [templates.cava]
 input_path = '~/.config/matugen/templates/cava-config'
 output_path = '~/.config/cava/config'
+
+[templates.quickshell]
+input_path = '~/.config/matugen/templates/quickshell-theme.qml'
+output_path = '~/.config/quickshell/Theme.qml'
