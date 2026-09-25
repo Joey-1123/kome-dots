@@ -320,6 +320,11 @@ if grep -Eq '#[0-9a-fA-F]{6,8}|contentRightMargin' "$bluetooth_page"; then
 else
     pass "Bluetooth page uses shared semantic tokens"
 fi
+if grep -Fq 'interval: 5000' "$bluetooth_service"; then
+    pass "Bluetooth discovery retry avoids short adapter races"
+else
+    fail "Bluetooth discovery retry avoids short adapter races"
+fi
 
 storage_page="$ROOT/config/quickshell/SettingsPages/StoragePage.qml"
 storage_service="$ROOT/config/quickshell/StorageService.qml"
