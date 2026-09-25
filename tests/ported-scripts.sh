@@ -256,6 +256,10 @@ else
     fail "presets cover every template colour role"
 fi
 
+if ! bash "$ROOT/tests/settings-pages.sh"; then
+    FAIL=1
+fi
+
 if [[ "$FAIL" -eq 0 ]]; then
     echo "=== ported-scripts: all pass ==="
 else
