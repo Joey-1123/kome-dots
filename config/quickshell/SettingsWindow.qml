@@ -30,15 +30,15 @@ PanelWindow {
 
     property bool showing: false
 
-    function show() {
+    function openPanel() {
         showing = true
     }
 
-    function hide() {
+    function closePanel() {
         showing = false
     }
 
-    function toggle() {
+    function togglePanel() {
         showing = !showing
     }
 
@@ -46,15 +46,19 @@ PanelWindow {
         target: "settings"
 
         function toggle(): void {
-            root.toggle()
+            root.togglePanel()
         }
 
         function show(): void {
-            root.show()
+            root.showing = true
         }
 
         function hide(): void {
-            root.hide()
+            root.showing = false
+        }
+
+        function isShowing(): bool {
+            return root.showing
         }
     }
 
@@ -74,11 +78,11 @@ PanelWindow {
         color: "transparent"
         focus: root.showing
 
-        Keys.onEscapePressed: root.hide()
+        Keys.onEscapePressed: root.closePanel()
 
         MouseArea {
             anchors.fill: parent
-            onClicked: root.hide()
+            onClicked: root.closePanel()
         }
     }
 
@@ -93,6 +97,8 @@ PanelWindow {
     ]
 
     property int selectedIndex: 0
+    readonly property bool reducedMotion:
+        Quickshell.env("KOME_REDUCED_MOTION") === "1"
 
     PerspectivePanel {
         id: card
@@ -185,7 +191,7 @@ PanelWindow {
                     spacing: 12
 
                     Text {
-                        text: " SETTINGS"
+                        text: " KOME"
 
                         color: Theme.text
 
@@ -217,14 +223,19 @@ PanelWindow {
                                 width: sidebar.width
                                 height: 38
 
+                                activeFocusOnTab: true
+                                property bool hovered: false
+
                                 radius: Theme.radius
 
                                 color: root.selectedIndex === index
                                     ? Theme.alpha(Theme.accent, 0.12)
-                                    : "transparent"
+                                    : hovered || activeFocus
+                                        ? Theme.alpha(Theme.accent, 0.06)
+                                        : "transparent"
 
-                                border.width: root.selectedIndex === index ? 1 : 0
-                                border.color: Theme.accent
+                                border.width: root.selectedIndex === index || activeFocus ? 1 : 0
+                                border.color: activeFocus ? Theme.accent2 : Theme.accent
 
                                 Rectangle {
                                     visible: root.selectedIndex === index
@@ -286,8 +297,13 @@ PanelWindow {
 
                                     hoverEnabled: true
 
-                                    onEntered: root.selectedIndex = index
+                                    onEntered: parent.hovered = true
+                                    onExited: parent.hovered = false
+                                    onClicked: root.selectedIndex = index
                                 }
+
+                                Keys.onReturnPressed: root.selectedIndex = index
+                                Keys.onEnterPressed: root.selectedIndex = index
                             }
                         }
                     }
@@ -315,31 +331,41 @@ PanelWindow {
                             + root.navItems[root.selectedIndex].page
                             + ".qml"
 
+                        x: 0
                         opacity: 0
 
-                        Component.onCompleted: opacity = 1
-                        onSourceChanged: fadeIn.restart()
-
-                        Behavior on opacity {
-                            NumberAnimation {
-                                duration: Theme.animMed
-                            }
-                        }
+                        Component.onCompleted: pageTransition.restart()
+                        onSourceChanged: pageTransition.restart()
 
                         SequentialAnimation {
-                            id: fadeIn
+                            id: pageTransition
 
+                            PropertyAction {
+                                target: pageLoader
+                                property: "x"
+                                value: root.reducedMotion ? 0 : 8
+                            }
                             PropertyAction {
                                 target: pageLoader
                                 property: "opacity"
                                 value: 0
                             }
 
-                            NumberAnimation {
-                                target: pageLoader
-                                property: "opacity"
-                                to: 1
-                                duration: Theme.animMed
+                            ParallelAnimation {
+                                NumberAnimation {
+                                    target: pageLoader
+                                    property: "x"
+                                    to: 0
+                                    duration: root.reducedMotion ? 0 : Theme.animFast
+                                    easing.type: Easing.OutCubic
+                                }
+                                NumberAnimation {
+                                    target: pageLoader
+                                    property: "opacity"
+                                    to: 1
+                                    duration: root.reducedMotion ? 100 : Theme.animFast
+                                    easing.type: Easing.OutCubic
+                                }
                             }
                         }
                     }
