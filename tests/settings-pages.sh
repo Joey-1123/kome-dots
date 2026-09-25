@@ -31,6 +31,8 @@ component_contract SettingsRow.qml "shared settings row"
 component_contract MetricCard.qml "shared live metric card"
 component_contract StatePill.qml "shared semantic state pill"
 component_contract EmptyState.qml "shared loading/empty/error state"
+component_contract SettingsSearch.qml "shared keyboard search field"
+component_contract NetworkHero.qml "shared active network summary"
 
 if [[ -f "$ROOT/config/quickshell/SettingsPage.qml" ]]; then
     if grep -Fq 'bottomPadding: 18' "$ROOT/config/quickshell/SettingsPage.qml"; then
@@ -225,6 +227,48 @@ if grep -Fq 'id: nightlightLoad' "$display_service" \
     pass "Display night-light persistence avoids missing-file warnings"
 else
     fail "Display night-light persistence avoids missing-file warnings"
+fi
+
+if [[ -f "$ROOT/config/quickshell/SettingsSearch.qml" ]]; then
+    if grep -Fq 'Keys.onEscapePressed' "$ROOT/config/quickshell/SettingsSearch.qml" \
+        && grep -Fq 'TextInput' "$ROOT/config/quickshell/SettingsSearch.qml"; then
+        pass "shared search supports keyboard focus and clearing"
+    else
+        fail "shared search supports keyboard focus and clearing"
+    fi
+fi
+
+network_page="$ROOT/config/quickshell/SettingsPages/NetworkPage.qml"
+network_service="$ROOT/config/quickshell/NetworkService.qml"
+if grep -Fq 'SettingsPage {' "$network_page" \
+    && grep -Fq 'NetworkService {' "$network_page" \
+    && [[ "$(wc -l < "$network_page")" -le 260 ]]; then
+    pass "Network page separates network control from its UI"
+else
+    fail "Network page separates network control from its UI"
+fi
+if grep -Fq 'SettingsSearch {' "$network_page" \
+    && [[ "$(grep -Fc 'SettingsSection {' "$network_page")" -ge 4 ]]; then
+    pass "Network page exposes status, Wi-Fi, search, and wired sections"
+else
+    fail "Network page exposes status, Wi-Fi, search, and wired sections"
+fi
+if grep -Fq '"device", "wifi", "connect", ssid, "password", password' "$network_service"; then
+    pass "Network service passes Wi-Fi credentials as separate arguments"
+else
+    fail "Network service passes Wi-Fi credentials as separate arguments"
+fi
+if grep -Fq 'property string password' "$network_service" \
+    || grep -Fq 'statusText.*password' "$network_page"; then
+    fail "Network page does not retain or display Wi-Fi passwords"
+else
+    pass "Network page does not retain or display Wi-Fi passwords"
+fi
+if grep -Eq 'contentRightMargin|property string monoFont' "$network_page" \
+    || grep -Eq '#[0-9a-fA-F]{6,8}' "$network_page"; then
+    fail "Network page uses shared tokens without legacy margins"
+else
+    pass "Network page uses shared tokens without legacy margins"
 fi
 
 if [[ "$FAIL" -eq 0 ]]; then
