@@ -64,19 +64,22 @@ start_all() {
         quickshell) start_component "quickshell" "quickshell -c shell.qml" ;;
     esac
 
-    # on-screen display
-    case "${KOME_OSD:-swayosd}" in
-        swayosd) start_component "swayosd-server" "swayosd-server" ;;
-    esac
+    # on-screen display. The quickshell root shell ships its own themed
+    # VolumeOsd, so running swayosd alongside it shows two volume popups.
+    # Start swayosd only when that shell isn't providing the OSD.
+    local qs_shell=0
+    if [[ "${KOME_BAR:-waybar}" != "quickshell" ]] && command -v qs >/dev/null 2>&1; then
+        qs_shell=1
+        start_component "qs" "qs"
+    fi
+    if [[ "${KOME_OSD:-swayosd}" == "swayosd" && "$qs_shell" -eq 0 ]]; then
+        start_component "swayosd-server" "swayosd-server"
+    fi
 
     # quickshell root shell: volume OSD, settings control centre, and the
     # hot-corner triggers. Skipped when quickshell is the bar, since that
     # provider owns shell.qml itself.
-    if [[ "${KOME_BAR:-waybar}" != "quickshell" ]] && command -v qs >/dev/null 2>&1; then
-        # the process is named "qs", not "quickshell" — matching the wrong
-        # name makes every session start spawn another copy
-        start_component "qs" "qs"
-    fi
+    # (started above, alongside the OSD decision, so the two stay in sync)
 
     # network tray applet — provides the clickable wifi/ethernet UI
     if command -v nm-applet >/dev/null 2>&1; then

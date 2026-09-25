@@ -20,9 +20,7 @@
     "widgets": [
         "title",
         "dnd",
-        "notifications",
-        "volume",
-        "backlight"
+        "notifications"
     ],
     "widget-config": {
         "title": {
