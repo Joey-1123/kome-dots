@@ -55,6 +55,17 @@ link_shell() {
             [[ "${DRY_RUN:-0}" == "1" ]] || record_manifest "L ${dest}"
             ok "linked ~/.zshrc"
             ;;
+        fish)
+            # fish only reads a config when ~/.config/fish exists, so the parent
+            # directory has to be in place before the symlink.
+            local src="${KOME_CONFIG_SRC}/shell/config.fish" dest="${XDG_CONFIG_HOME:-$HOME/.config}/fish/config.fish"
+            [[ -f "$src" ]] || return 0
+            backup_target "$dest"
+            run mkdir -p "$(dirname "$dest")"
+            run ln -sfn "$src" "$dest"
+            [[ "${DRY_RUN:-0}" == "1" ]] || record_manifest "L ${dest}"
+            ok "linked fish config"
+            ;;
     esac
 }
 

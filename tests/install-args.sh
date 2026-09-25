@@ -63,6 +63,17 @@ else
     pass "no bare '[[ ... ]] && ...' in install/main.sh"
 fi
 
+# Test 7: the fish shell choice links a config that silences the stock greeting.
+fish_conf="$ROOT/config/shell/config.fish"
+if [[ -f "$fish_conf" ]] \
+    && grep -Eq '^[[:space:]]*set[[:space:]]+(-g[[:space:]]+)?fish_greeting[[:space:]]+""' "$fish_conf" \
+    && grep -Fq 'fish)' "$ROOT/install/lib/link.sh" \
+    && grep -Fq 'config.fish' "$ROOT/install/lib/link.sh"; then
+    pass "fish config silences the greeting and is linked by the installer"
+else
+    fail "fish config silences the greeting and is linked by the installer"
+fi
+
 if [[ "$FAIL" -eq 0 ]]; then
     echo "=== install-args: all pass ==="
 else

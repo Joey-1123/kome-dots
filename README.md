@@ -22,7 +22,7 @@ kome/
 │   ├── btop/            # System monitor
 │   ├── cava/            # Audio visualizer
 │   ├── fastfetch/       # System info
-│   ├── shell/           # zshrc (links to ~/.zshrc)
+│   ├── shell/           # zshrc and fish config (linked at install)
 │   ├── starship/        # Prompt
 │   ├── matugen/         # Theming engine + templates
 │   ├── gtk-3.0/         # GTK3 theming
