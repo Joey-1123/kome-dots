@@ -56,7 +56,9 @@
         },
         "persistent-workspaces": {
             "*": 10
-        }
+        },
+        "on-scroll-up": "kome-workspace next",
+        "on-scroll-down": "kome-workspace prev"
     },
     "custom/separator": {
         "format": "|",
@@ -90,7 +92,8 @@
         "states": {
             "warning": 50,
             "critical": 80
-        }
+        },
+        "on-click": "kome-hub-page system"
     },
     "backlight": {
         "device": "intel_backlight",
@@ -106,8 +109,9 @@
             "󰃟",
             "󰃠"
         ],
-        "on-scroll-down": "brightnessctl s 5%-",
-        "on-scroll-up": "brightnessctl s +5%"
+        "on-click": "kome-brightness toggle",
+        "on-scroll-up": "kome-brightness up",
+        "on-scroll-down": "kome-brightness down"
     },
     "clock": {
         "format": "<span color='#df6124'>{0:%H:%M}</span> <span size='small' color='#616367'><i>{0:%a, %b %d}</i></span>",
@@ -141,7 +145,7 @@
         "tooltip-format-disconnected": "Disconnected",
         "interval": 3,
         "spacing": 1,
-        "on-click": "nm-connection-editor"
+        "on-click": "kome-hub-page network"
     },
     "battery": {
         "format": "{capacity}% {icon}",
@@ -177,7 +181,7 @@
         "tooltip-format-discharging": "{power:>1.0f}W↓ {timeTo}",
         "tooltip-format-charging": "{power:>1.0f}W↑ {timeTo}",
         "interval": 5,
-        "on-click": "qs ipc call settings toggle",
+        "on-click": "kome-hub-page kome",
         "states": {
             "warning": 30,
             "critical": 15
@@ -188,12 +192,11 @@
         "format-disabled": "󰂲 {status}",
         "format-connected": "󰂱 {num_connections}",
         "tooltip-format": "Devices connected: {num_connections}",
-        "on-click": "blueman-manager"
+        "on-click": "kome-hub-page bluetooth"
     },
     "pulseaudio": {
         "format": "{icon}",
-        "on-click": "pavucontrol",
-        "on-click-right": "wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle",
+        "on-click": "kome-hub-page audio",
         "tooltip-format": "Playing at {volume}%",
         "scroll-step": 5,
         "format-muted": "",
@@ -205,13 +208,14 @@
                 "",
                 ""
             ]
-        }
+        },
+        "on-scroll-up": "wpctl set-volume -l 125 @DEFAULT_AUDIO_SINK@ 5%+",
+        "on-scroll-down": "wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%-"
     },
     "custom/mpris": {
         "exec": "python3 -u ~/.config/waybar/scrolling-mpris.py",
         "format": "{text}",
         "return-type": "json",
-        "on-click": "playerctl play-pause",
         "tooltip": false
     },
     "idle_inhibitor": {
@@ -231,7 +235,8 @@
             "updated": ""
         },
         "exec-if": "which waybar-module-pacman-updates",
-        "exec": "waybar-module-pacman-updates --no-zero-output"
+        "exec": "waybar-module-pacman-updates --no-zero-output",
+        "on-click": "kome-hub-page updates"
     },
     "group/tray-expander": {
         "orientation": "inherit",

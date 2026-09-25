@@ -169,14 +169,17 @@ validate_theme() {
     }
 }
 
-# reload_bar — waybar reads style.css on SIGUSR2; without it a running bar
-# keeps the previous sheet until the next restart.
-reload_bar() {
-    if pgrep -x waybar >/dev/null 2>&1; then
-        pkill -SIGUSR2 -x waybar 2>/dev/null || true
-        return 0
-    fi
-    return 1
+# restart_bar — a theme changes the module layout too, and waybar 0.15
+# segfaults when a tray layout is reloaded repeatedly (two SIGSEGVs on this
+# machine, both after reload storms). Upstream restarts the bar for exactly this
+# reason, so a clean restart is the supported path. Only restarts a bar that is
+# already running: outside a session the files are written and left alone.
+restart_bar() {
+    pgrep -x waybar >/dev/null 2>&1 || return 1
+    pkill -x waybar 2>/dev/null || true
+    sleep 0.3
+    setsid bash -c 'exec waybar' >/dev/null 2>&1 &
+    return 0
 }
 
 apply_theme() {
@@ -189,8 +192,8 @@ apply_theme() {
     fi
     local missing
     missing="$(missing_needs "$name" | tr '\n' ' ')"
-    if reload_bar; then
-        printf 'applied %s and reloaded the bar\n' "$name"
+    if restart_bar; then
+        printf 'applied %s and restarted the bar\n' "$name"
     else
         printf 'applied %s for the next bar start\n' "$name"
     fi
@@ -211,8 +214,8 @@ reset_theme() {
     if [[ -f "$BASE_LAYOUT" ]]; then
         ln -sfn "$BASE_LAYOUT" "$ACTIVE_LAYOUT"
     fi
-    if reload_bar; then
-        printf '%s\n' 'reset to the kome bar theme and reloaded the bar'
+    if restart_bar; then
+        printf '%s\n' 'reset to the kome bar theme and restarted the bar'
     else
         printf '%s\n' 'reset to the kome bar theme for the next bar start'
     fi

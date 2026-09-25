@@ -418,6 +418,14 @@ else
     fail "Terminal theme swatch falls back to shared tokens for missing colors"
 fi
 
+if grep -Fq 'function openPage(name: string)' "$ROOT/config/quickshell/SettingsWindow.qml" \
+    && grep -Fq 'function selectPage(name: string)' "$ROOT/config/quickshell/SettingsWindow.qml" \
+    && grep -Fq 'root.showing = true' "$ROOT/config/quickshell/SettingsWindow.qml"; then
+    pass "settings hub exposes an idempotent openPage for bar modules"
+else
+    fail "settings hub exposes an idempotent openPage for bar modules"
+fi
+
 shortcuts_page="$ROOT/config/quickshell/SettingsPages/ShortcutsPage.qml"
 shortcut_service="$ROOT/config/quickshell/ShortcutService.qml"
 if grep -Fq 'SettingsPage {' "$shortcuts_page" \

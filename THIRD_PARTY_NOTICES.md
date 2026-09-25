@@ -44,8 +44,8 @@ so the themes follow the generated kome palette, and selectors naming the
 omarchy menu module (`custom-omarchy*`) are removed by
 `scripts/strip-omarchy-css.py`. For the layouts the module list, order, heights,
 margins, formats, and tooltips are upstream; omarchy-only modules are dropped,
-omarchy click handlers are rewritten to the equivalent kome script, and the
-modules needing `wttrbar` or `waybar-module-pacman-updates` get an `exec-if`
+omarchy click handlers are rewritten so every click lands in kome's own UI, and
+the modules needing `wttrbar` or `waybar-module-pacman-updates` get an `exec-if`
 guard. `config/waybar/scrolling-mpris.py` is V7.2b's scrolling MPRIS script,
 credited to Mezutelni in the upstream README. The upstream notice is kept at
 `config/waybar/themes/LICENSE.md`.

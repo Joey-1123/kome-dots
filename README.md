@@ -191,21 +191,49 @@ its tray/mpris/status groups — not just its colours. The **Configs** page list
 them with a preview swatch, and the bar reloads over SIGUSR2 — no restart, no
 flicker.
 
-Some themes want two extra packages (weather and Arch update count). They are
-guarded with `exec-if`, so their modules stay hidden until installed:
+Some themes want two extra packages (weather and Arch update count), and seven of
+them read the power profile from `power-profiles-daemon`. The weather and update
+modules are guarded with `exec-if`, so they stay hidden until installed:
 
 ```bash
 yay -S wttrbar waybar-module-pacman-updates-git
+sudo pacman -S power-profiles-daemon && sudo systemctl enable --now power-profiles-daemon
 ```
 
 ```bash
 kome-bar-theme list              # available themes
 kome-bar-theme list --json       # name, palette, accent, and package needs
 kome-bar-theme current           # kome | <theme>
-kome-bar-theme apply V7_1a       # switch theme and layout
+kome-bar-theme apply V7_1a       # switch theme and layout, restart the bar
 kome-bar-theme needs V7_1a       # packages this theme still wants
 kome-bar-theme reset             # back to the kome bar
 ```
+
+Switching a theme restarts the bar rather than reloading it: waybar 0.15
+segfaults when a tray layout is reloaded repeatedly, and upstream restarts the
+bar for the same reason.
+
+**Clicks and scroll**
+
+Every module in every theme routes into kome, never into a theme's own launcher:
+
+| Module | Click | Scroll |
+|--------|-------|--------|
+| network | hub → Network | — |
+| bluetooth | hub → Bluetooth | — |
+| volume | hub → Audio | `wpctl` ±5% (sink or source) |
+| cpu / memory / temperature | hub → System | — |
+| battery | hub → Kome (power) | — |
+| backlight | `kome-brightness toggle` | `kome-brightness up` / `down` |
+| updates | hub → Kome, runs the check | — |
+| workspaces | activate (upstream) | `kome-workspace next` / `prev` |
+| mpris | `playerctl` (upstream) | — |
+| recording indicator | `kome-record` | — |
+
+Right-click on a volume module stays the mute toggle, and the clock's
+right-click stays waybar's own calendar-view toggle. `kome-workspace` exists
+because this Hyprland takes Lua dispatchers — `hyprctl dispatch workspacenext`
+is a parse error here.
 
 Adding a sheet and a layout to `config/waybar/themes/` is enough for a theme to
 appear in the picker; a `kome-bar-theme: accent=#rrggbb` comment in the sheet

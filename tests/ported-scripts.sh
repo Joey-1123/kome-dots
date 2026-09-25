@@ -142,7 +142,7 @@ if XDG_CONFIG_HOME="$bar_iso" "$ROOT/scripts/kome-bar-theme" list 2>/dev/null | 
     && [[ "$(XDG_CONFIG_HOME="$bar_iso" "$ROOT/scripts/kome-bar-theme" current)" == 'V7_2b' ]] \
     && [[ "$(readlink -f "$bar_iso/waybar/config.jsonc")" == "$bar_iso/waybar/themes/V7_2b.jsonc" ]] \
     && XDG_CONFIG_HOME="$bar_iso" "$ROOT/scripts/kome-bar-theme" list --json 2>/dev/null | grep -Fq '"accent":"#df6124"' \
-    && [[ -n "$(XDG_CONFIG_HOME="$bar_iso" "$ROOT/scripts/kome-bar-theme" needs V7_2b)" ]] \
+    && XDG_CONFIG_HOME="$bar_iso" "$ROOT/scripts/kome-bar-theme" list --json 2>/dev/null | grep -Fq '"needs":["waybar-module-pacman-updates","wttrbar"]' \
     && XDG_CONFIG_HOME="$bar_iso" "$ROOT/scripts/kome-bar-theme" reset >/dev/null 2>&1 \
     && [[ "$(XDG_CONFIG_HOME="$bar_iso" "$ROOT/scripts/kome-bar-theme" current)" == 'kome' ]] \
     && [[ "$(readlink -f "$bar_iso/waybar/config.jsonc")" == "$ROOT/config/waybar/config.jsonc" ]]; then
@@ -156,6 +156,54 @@ if grep -Fq '"on-click": "pavucontrol"' "$waybar_config" \
     pass "Waybar click actions do not repurpose temperature clicks"
 else
     fail "Waybar click actions do not repurpose temperature clicks"
+fi
+# A pkill that matches nothing returns 1, which under `set -e` aborted kome-bar
+# and left the bar unable to come back; the start also needs setsid so the bar
+# survives the shell that launched it.
+if grep -Fq 'stop_bar() {' "$ROOT/scripts/kome-bar" \
+    && grep -Fq 'pkill -x "$1" 2>/dev/null || true' "$ROOT/scripts/kome-bar" \
+    && grep -Fq 'setsid bash -c "$1"' "$ROOT/scripts/kome-bar" \
+    && ! grep -Eq '^\s*(pkill waybar|waybar &)' "$ROOT/scripts/kome-bar"; then
+    pass "kome-bar restarts a dead bar and outlives its launching shell"
+else
+    fail "kome-bar restarts a dead bar and outlives its launching shell"
+fi
+
+# Bar modules must land in kome's own UI, and a theme switch restarts the bar:
+# waybar 0.15 segfaults on repeated SIGUSR2 reloads of a tray layout.
+if [[ -x "$ROOT/scripts/kome-hub-page" ]] \
+    && grep -Fq 'openPage' "$ROOT/scripts/kome-hub-page" \
+    && for page in kome shortcuts system audio display network bluetooth storage configs updates; do
+        grep -Fq "$page)" "$ROOT/scripts/kome-hub-page" || exit 1
+    done \
+    && grep -Fq 'restart_bar() {' "$ROOT/scripts/kome-bar-theme" \
+    && ! grep -Fq 'SIGUSR2' "$ROOT/scripts/kome-bar-theme"; then
+    pass "bar modules route into the hub and themes restart the bar"
+else
+    fail "bar modules route into the hub and themes restart the bar"
+fi
+if [[ -x "$ROOT/scripts/kome-brightness" ]] \
+    && grep -Fq 'brightnessctl' "$ROOT/scripts/kome-brightness" \
+    && [[ -x "$ROOT/scripts/kome-workspace" ]] \
+    && grep -Fq 'hl.dsp.focus' "$ROOT/scripts/kome-workspace" \
+    && ! grep -Eq 'hyprctl dispatch (workspacenext|workspaceprev|workspace [0-9])' "$ROOT"/scripts/* 2>/dev/null; then
+    pass "kome owns brightness and workspace switching for the bar"
+else
+    fail "kome owns brightness and workspace switching for the bar"
+fi
+# Every handler in a generated layout must be a kome script, a real system
+# command, or a waybar action token - never an omarchy launcher or a dead one.
+layout_handlers="$(grep -hE '"on-(click|scroll)[a-z-]*":' "$ROOT"/config/waybar/themes/*.jsonc \
+    | sed -E 's/.*": "//; s/",?$//' | sort -u)"
+if [[ -n "$layout_handlers" ]] \
+    && ! grep -Eq 'omarchy|nm-connection|pavucontrol|blueman|pactl|alacritty|xdg-terminal' <<<"$layout_handlers" \
+    && grep -q 'kome-hub-page network' <<<"$layout_handlers" \
+    && grep -q 'kome-hub-page audio' <<<"$layout_handlers" \
+    && grep -q 'kome-brightness' <<<"$layout_handlers" \
+    && grep -q 'kome-workspace' <<<"$layout_handlers"; then
+    pass "generated layouts only run kome or known system handlers"
+else
+    fail "generated layouts only run kome or known system handlers"
 fi
 
 # Application shells share a transparent, minimal surface treatment.

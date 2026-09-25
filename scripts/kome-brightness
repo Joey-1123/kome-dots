@@ -1,0 +1,53 @@
+#!/usr/bin/env bash
+# kome-brightness — screen backlight control for the bar's backlight module.
+# Usage: kome-brightness {up|down|toggle|get|set <percent>}
+
+set -euo pipefail
+
+STEP="${KOME_BRIGHTNESS_STEP:-5}"
+RESTORE="${KOME_BRIGHTNESS_RESTORE:-50}"
+
+# brightnessctl reports raw values with a device max, so work in percent.
+read -r raw max <<<"$(brightnessctl -m get 2>/dev/null) $(brightnessctl -m max 2>/dev/null)"
+if [[ -z "${max:-}" || "$max" == "0" ]]; then
+    printf 'brightness is not available on this machine\n' >&2
+    exit 1
+fi
+
+percent() {
+    printf '%s' $(( ${1:-0} * 100 / max ))
+}
+
+current() {
+    percent "$raw"
+}
+
+apply() {
+    local target="$1" value
+    (( target > 100 )) && target=100
+    (( target < 0 )) && target=0
+    value=$(( target * max / 100 ))
+    brightnessctl set "$value" >/dev/null
+    printf '%s\n' "$target"
+}
+
+case "${1:-get}" in
+    get) current ;;
+    up) apply $(( $(current) + STEP )) ;;
+    down) apply $(( $(current) - STEP )) ;;
+    toggle)
+        if (( $(current) > 0 )); then
+            apply 0
+        else
+            apply "$RESTORE"
+        fi
+        ;;
+    set)
+        [[ -n "${2:-}" ]] || { printf 'usage: kome-brightness set <percent>\n' >&2; exit 1; }
+        apply "$2"
+        ;;
+    *)
+        printf 'usage: kome-brightness {up|down|toggle|get|set <percent>}\n' >&2
+        exit 1
+        ;;
+esac

@@ -54,10 +54,10 @@ REPLACE = {
 
 # omarchy command -> the kome script or desktop tool with the same job.
 CLICKS = {
-    "omarchy-menu": "qs ipc call settings toggle",
-    "omarchy-launch-wifi": "nm-connection-editor",
-    "omarchy-launch-audio": "pavucontrol",
-    "omarchy-launch-bluetooth": "blueman-manager",
+    "omarchy-menu": "kome-hub-page kome",
+    "omarchy-launch-wifi": "kome-hub-page network",
+    "omarchy-launch-audio": "kome-hub-page audio",
+    "omarchy-launch-bluetooth": "kome-hub-page bluetooth",
     "omarchy-capture-screenrecording": "kome-record",
     "omarchy-toggle-notification-silencing": "kome-notifications toggle",
     "omarchy-theme-set": "kome-theme set",
@@ -66,12 +66,92 @@ CLICKS = {
     "pamixer": "wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle",
 }
 
+# Whatever bar theme is active, a click lands in kome's own UI. Keyed by module
+# id; pulseaudio instances (pulseaudio#output) fall back to their base id.
+HUB_CLICKS = {
+    "network": "kome-hub-page network",
+    "bluetooth": "kome-hub-page bluetooth",
+    "pulseaudio": "kome-hub-page audio",
+    "wireplumber": "kome-hub-page audio",
+    "cpu": "kome-hub-page system",
+    "memory": "kome-hub-page system",
+    "temperature": "kome-hub-page system",
+    "disk": "kome-hub-page storage",
+    "battery": "kome-hub-page kome",
+    "backlight": "kome-brightness toggle",
+    "custom/updatespacman": "kome-hub-page updates",
+    "custom/update": "kome-hub-page updates",
+    "custom/weather": "kome-hub-page display",
+}
+
+# Scroll has to do something real too, not just carry upstream's dead handlers.
+def scroll_for(name):
+    """Scroll handlers per module, or None when scrolling it should do nothing."""
+    if name in DECORATIVE or name.startswith("custom/"):
+        return None
+    if name == "backlight":
+        return {
+            "on-scroll-up": "kome-brightness up",
+            "on-scroll-down": "kome-brightness down",
+        }
+    if name == "hyprland/workspaces":
+        return {
+            "on-scroll-up": "kome-workspace next",
+            "on-scroll-down": "kome-workspace prev",
+        }
+    if base_module(name) in ("pulseaudio", "wireplumber"):
+        target = "@DEFAULT_AUDIO_SOURCE@" if name.endswith("#input") else "@DEFAULT_AUDIO_SINK@"
+        return {
+            "on-scroll-up": f"wpctl set-volume -l 125 {target} 5%+",
+            "on-scroll-down": f"wpctl set-volume {target} 5%-",
+        }
+    return None
+
+# Modules kome owns end to end: keep these handlers, drop only omarchy ones.
+KOME_OWNED = {
+    "custom/mpris",
+    "mpris",
+    "hyprland/workspaces",
+    "hyprland/window",
+    "hyprland/submap",
+    "tray",
+    "clock",
+    "idle_inhibitor",
+    "power-profiles-daemon",
+    "custom/separator",
+    "custom/separator2",
+    "custom/screenrecording-indicator",
+    "group/tray-expander",
+}
+
+# click and scroll handlers that are pure decoration upstream.
+DECORATIVE = {"custom/weather", "custom/separator", "custom/separator2", "clock", "tray"}
+
+
+def base_module(name):
+    """pulseaudio#output -> pulseaudio; group/left1 -> left1."""
+    return name.split("#", 1)[0]
+
+
+def hub_handler(name, kind):
+    if kind == "scroll":
+        return scroll_for(name)
+    if name in DECORATIVE:
+        return None
+    if name in HUB_CLICKS:
+        return HUB_CLICKS[name]
+    # volume sinks and sources route to the audio page too
+    if base_module(name) in ("pulseaudio", "wireplumber"):
+        return "kome-hub-page audio"
+    return None
+
+
 # Every command a generated layout may run that is not a waybar built-in.
 KNOWN = {
     "sh", "bash", "printf", "echo", "test", "date", "sed", "busctl", "python3",
-    "playerctl", "notify-send", "which", "nm-connection-editor", "pavucontrol",
-    "blueman-manager", "kitty", "wpctl", "kome-record", "kome-notifications",
-    "kome-theme", "qs",
+    "playerctl", "notify-send", "which", "kitty", "wpctl", "kome-workspace",
+    "kome-record", "kome-notifications", "kome-theme", "kome-updates",
+    "kome-hub-page", "kome-brightness", "qs",
 }
 
 # Extras the themes expect but that are not part of a base install. Their modules
@@ -143,6 +223,7 @@ def collect(config):
 
 
 def rewrite_clicks(config):
+    """Strip omarchy launchers, keeping only handlers kome can run."""
     used = set()
     for value in config.values():
         if not isinstance(value, dict):
@@ -186,6 +267,83 @@ def strip_rewrite_modules(block):
     return block
 
 
+def rewrite_handlers(config, used):
+    """Point every click and scroll at kome's own UI.
+
+    Upstream sends clicks to omarchy launchers that do not exist here, and
+    leaves several modules with no handler at all. Every module kome can speak
+    for gets an explicit handler, and omarchy-only ones are stripped, so no
+    click can run a command that is not there.
+    """
+    for key, value in config.items():
+        if not isinstance(value, dict) or key not in used:
+            continue
+        if key == "group/tray-expander":
+            continue
+        for field in ("on-click", "on-click-right", "on-click-middle",
+                      "on-scroll-up", "on-scroll-down"):
+            command = value.get(field)
+            if not command:
+                continue
+            first = command.split()[0]
+            if (OMARCHY_CALL.search(command)
+                    or first.startswith("omarchy-")
+                    or (re.match(r"^[a-z]+$", first) and first not in WAYBAR_ACTIONS)):
+                del value[field]
+        if key not in KOME_OWNED:
+            handler = hub_handler(key, "click")
+            if handler:
+                value["on-click"] = handler
+                # Secondary clicks follow the same destination, except the
+                # volume mute convention, which stays on the module itself.
+                for field in ("on-click-right", "on-click-middle"):
+                    command = value.get(field, "")
+                    if "wpctl set-mute" in command:
+                        target = "@DEFAULT_AUDIO_SOURCE@" if key.endswith("#input") else "@DEFAULT_AUDIO_SINK@"
+                        value[field] = f"wpctl set-mute {target} toggle"
+                    else:
+                        value.pop(field, None)
+            elif key not in ("mpris", "custom/mpris"):
+                value.pop("on-click", None)
+        scroll = hub_handler(key, "scroll") or {}
+        for field, command in (("on-scroll-up", scroll.get("on-scroll-up")),
+                               ("on-scroll-down", scroll.get("on-scroll-down"))):
+            if command:
+                value[field] = command
+    return config
+
+
+# waybar's own action tokens are not shell commands: keep them.
+WAYBAR_ACTIONS = {
+    "activate", "shift+activate", "open", "toggle", "shift_toggle", "mode",
+    "next_month", "prev_month", "next_year", "prev_year", "close",
+}
+
+
+def nested_handlers(block):
+    """Handler fields nested inside a module block, e.g. clock.calendar."""
+    for key, value in block.items():
+        if isinstance(value, dict):
+            for field in ("on-click", "on-click-right", "on-click-middle",
+                          "on-scroll-up", "on-scroll-down"):
+                if field in value:
+                    yield key, value, field
+
+
+def strip_foreign_handlers(block):
+    """Remove handlers that call omarchy or upstream placeholders.
+
+    A bare lowercase word is a waybar action token (`activate`, `mode`, ...), not
+    a command, so those stay; anything else must be a real binary or script.
+    """
+    for _, holder, field in list(nested_handlers(block)):
+        command = holder[field]
+        first = command.split()[0]
+        if OMARCHY_CALL.search(command) or first.startswith("omarchy-"):
+            del holder[field]
+    return block
+
+
 def external_commands(config):
     """The binaries a layout shells out to, ignoring waybar built-ins.
 
@@ -209,6 +367,7 @@ def build(name, version, upstream_dir, out_dir):
     config = load(os.path.join(upstream_dir, version, "config.jsonc"))
     used = collect(config)
     rewrite_clicks(config)
+    rewrite_handlers(config, used)
 
     out = {}
     for key, value in config.items():
@@ -238,7 +397,7 @@ def build(name, version, upstream_dir, out_dir):
             block["modules"] = [m for m in block.get("modules", []) if m not in DROP]
         if "modules" in block:
             block["modules"] = filter_modules(block["modules"])
-        out[key] = strip_rewrite_modules(block)
+        out[key] = strip_foreign_handlers(strip_rewrite_modules(block))
 
     needed = external_commands(out)
     header = [

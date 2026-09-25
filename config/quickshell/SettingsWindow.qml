@@ -51,6 +51,20 @@ PanelWindow {
         showing = !showing
     }
 
+    // Page lookup lives on the window so both the IPC handler and hot keys can
+    // use it: the bar calls openPage, the handler has no scope of its own.
+    function selectPage(name: string): void {
+        const query = name.toLowerCase()
+        for (let i = 0; i < root.navItems.length; i++) {
+            const item = root.navItems[i]
+            if (item.name.toLowerCase() === query ||
+                item.page.toLowerCase() === name.toLowerCase()) {
+                root.selectedIndex = i
+                return
+            }
+        }
+    }
+
     IpcHandler {
         target: "settings"
 
@@ -71,15 +85,15 @@ PanelWindow {
         }
 
         function showPage(name: string): void {
-            const query = name.toLowerCase()
-            for (let i = 0; i < root.navItems.length; i++) {
-                const item = root.navItems[i]
-                if (item.name.toLowerCase() === query ||
-                    item.page.toLowerCase() === name.toLowerCase()) {
-                    root.selectedIndex = i
-                    return
-                }
-            }
+            root.selectPage(name)
+        }
+
+        // Bar modules call this: select the page and make sure the panel is
+        // actually up, without the toggle that would close it when it is
+        // already open.
+        function openPage(name: string): void {
+            root.selectPage(name)
+            root.showing = true
         }
 
         function runQuickAction(action: string): void {

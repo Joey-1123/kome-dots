@@ -54,7 +54,9 @@
             "3": [],
             "4": [],
             "5": []
-        }
+        },
+        "on-scroll-up": "kome-workspace next",
+        "on-scroll-down": "kome-workspace prev"
     },
     "custom/updatespacman": {
         "format": "{icon}",
@@ -64,11 +66,13 @@
             "updated": "󰂪"
         },
         "exec-if": "which waybar-module-pacman-updates",
-        "exec": "waybar-module-pacman-updates --interval-seconds 5 --network-interval-seconds 300"
+        "exec": "waybar-module-pacman-updates --interval-seconds 5 --network-interval-seconds 300",
+        "on-click": "kome-hub-page updates"
     },
     "cpu": {
         "interval": 5,
-        "format": "{usage}% 󰍛"
+        "format": "{usage}% 󰍛",
+        "on-click": "kome-hub-page system"
     },
     "clock": {
         "format": "{:%H:%M %a}",
@@ -110,7 +114,7 @@
         "tooltip-format-disconnected": "Disconnected",
         "interval": 3,
         "nospacing": 1,
-        "on-click": "kitty"
+        "on-click": "kome-hub-page network"
     },
     "battery": {
         "format": "{capacity}% {icon}",
@@ -150,7 +154,8 @@
         "states": {
             "warning": 20,
             "critical": 10
-        }
+        },
+        "on-click": "kome-hub-page kome"
     },
     "bluetooth": {
         "format": "",
@@ -158,7 +163,7 @@
         "format-off": "󰂲",
         "format-connected": "",
         "tooltip-format": "Devices connected: {num_connections}",
-        "on-click": "blueman-manager"
+        "on-click": "kome-hub-page bluetooth"
     },
     "backlight": {
         "device": "intel_backlight",
@@ -169,7 +174,10 @@
             "🌗",
             "🌖",
             "🌕"
-        ]
+        ],
+        "on-click": "kome-brightness toggle",
+        "on-scroll-up": "kome-brightness up",
+        "on-scroll-down": "kome-brightness down"
     },
     "custom/weather": {
         "format": "{}°",
@@ -181,7 +189,6 @@
     },
     "pulseaudio": {
         "format": "{icon}",
-        "on-click-right": "wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle",
         "tooltip-format": "Playing at {volume}%",
         "scroll-step": 5,
         "format-muted": "",
@@ -191,7 +198,10 @@
                 "",
                 ""
             ]
-        }
+        },
+        "on-click": "kome-hub-page audio",
+        "on-scroll-up": "wpctl set-volume -l 125 @DEFAULT_AUDIO_SINK@ 5%+",
+        "on-scroll-down": "wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%-"
     },
     "group/tray-expander": {
         "orientation": "inherit",

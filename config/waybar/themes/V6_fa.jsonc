@@ -159,7 +159,9 @@
             "class<org.pipewire.Helvum>": "󰓃",
             "class<localsend>": "",
             "class<PrusaSlicer|UltiMaker-Cura|OrcaSlicer>": "󰹛"
-        }
+        },
+        "on-scroll-up": "kome-workspace next",
+        "on-scroll-down": "kome-workspace prev"
     },
     "idle_inhibitor": {
         "format": "{icon}",
@@ -170,11 +172,13 @@
     },
     "cpu": {
         "interval": 2,
-        "format": "󰍛 {usage}%"
+        "format": "󰍛 {usage}%",
+        "on-click": "kome-hub-page system"
     },
     "memory": {
         "interval": 2,
-        "format": " {percentage}%"
+        "format": " {percentage}%",
+        "on-click": "kome-hub-page system"
     },
     "backlight": {
         "device": "intel_backlight",
@@ -186,7 +190,10 @@
             "🌗",
             "🌖",
             "🌕"
-        ]
+        ],
+        "on-click": "kome-brightness toggle",
+        "on-scroll-up": "kome-brightness up",
+        "on-scroll-down": "kome-brightness down"
     },
     "clock": {
         "format": " {:%H:%M %d/%m/%Y}",
@@ -220,7 +227,7 @@
         "tooltip-format-disconnected": "Disconnected",
         "interval": 3,
         "spacing": 1,
-        "on-click": "nm-connection-editor"
+        "on-click": "kome-hub-page network"
     },
     "battery": {
         "format": "{capacity}% {icon}",
@@ -257,7 +264,7 @@
         "tooltip-format-discharging": "{timeTo}",
         "tooltip-format-charging": "{timeTo}",
         "interval": 5,
-        "on-click": "qs ipc call settings toggle",
+        "on-click": "kome-hub-page kome",
         "states": {
             "warning": 20,
             "critical": 10
@@ -268,7 +275,7 @@
         "format-disabled": "󰂲",
         "format-connected": "󰂱",
         "tooltip-format": "Devices connected: {num_connections}",
-        "on-click": "blueman-manager"
+        "on-click": "kome-hub-page bluetooth"
     },
     "pulseaudio#input": {
         "format-source": "",
@@ -278,9 +285,9 @@
         "scroll-step": 1,
         "smooth-scrolling-threshold": 1,
         "max-volume": 100,
-        "on-click-right": "wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle",
-        "on-scroll-up": "pactl set-source-volume @DEFAULT_SOURCE@ +1%",
-        "on-scroll-down": "pactl set-source-volume @DEFAULT_SOURCE@ -1%"
+        "on-click": "kome-hub-page audio",
+        "on-scroll-up": "wpctl set-volume -l 125 @DEFAULT_AUDIO_SOURCE@ 5%+",
+        "on-scroll-down": "wpctl set-volume @DEFAULT_AUDIO_SOURCE@ 5%-"
     },
     "pulseaudio#output": {
         "format": "{icon}",
@@ -294,7 +301,9 @@
         "max-volume": 100,
         "scroll-step": 2,
         "smooth-scrolling-threshold": 1,
-        "on-click-right": "wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle"
+        "on-click": "kome-hub-page audio",
+        "on-scroll-up": "wpctl set-volume -l 125 @DEFAULT_AUDIO_SINK@ 5%+",
+        "on-scroll-down": "wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%-"
     },
     "power-profiles-daemon": {
         "format": "{icon}",
@@ -332,7 +341,8 @@
             "updated": ""
         },
         "exec-if": "which waybar-module-pacman-updates",
-        "exec": "waybar-module-pacman-updates --no-zero-output"
+        "exec": "waybar-module-pacman-updates --no-zero-output",
+        "on-click": "kome-hub-page updates"
     },
     "custom/screenrecording-indicator": {
         "exec": "test -f /tmp/kome-gsr.pid && printf 'REC' || printf ''",

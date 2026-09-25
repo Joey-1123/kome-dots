@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+# kome-hub-page — open the settings hub on a page.
+#
+# Bar modules point here instead of a theme's own launcher, so a click on the
+# wifi module lands on the hub's network page whatever bar theme is active.
+# Usage: kome-hub-page {kome|shortcuts|system|audio|display|network|bluetooth|storage|configs|updates}
+
+set -euo pipefail
+
+QS_BIN="${KOME_QS:-qs}"
+PAGE="${1:-kome}"
+
+case "$PAGE" in
+    kome)       target="KomePage" ;;
+    shortcuts)  target="ShortcutsPage" ;;
+    system)     target="SystemPage" ;;
+    audio)      target="SoundPage" ;;
+    display)    target="MonitorsPage" ;;
+    network)    target="NetworkPage" ;;
+    bluetooth)  target="BluetoothPage" ;;
+    storage)    target="StoragePage" ;;
+    configs)    target="ConfigsPage" ;;
+    updates)
+        # The hub's own update check, not a page.
+        "$QS_BIN" ipc call settings openPage KomePage >/dev/null 2>&1 || true
+        "$QS_BIN" ipc call settings runQuickAction updates >/dev/null 2>&1 || true
+        exit 0
+        ;;
+    *)
+        printf 'unknown page: %s\n' "$PAGE" >&2
+        printf 'pages: kome shortcuts system audio display network bluetooth storage configs updates\n' >&2
+        exit 1
+        ;;
+esac
+
+exec "$QS_BIN" ipc call settings openPage "$target"
