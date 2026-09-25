@@ -2,7 +2,7 @@
 
 ## Objective
 
-Turn the existing Quickshell settings window into a dotfiles control hub while preserving the current System, Audio, Display, Network, Bluetooth, Storage, and Configs pages.
+Turn the existing Quickshell settings window into a dotfiles control hub and revamp the current System, Audio, Display, Network, Bluetooth, Storage, and Configs pages without changing their filenames or provider contracts.
 
 The hub must provide one place to:
 
@@ -25,8 +25,16 @@ Success means every visible control either performs its action, reports a failur
 | `shortcuts` | Searchable keybind reference from the canonical cheat-sheet | `panel-motion` |
 | `desktop-controls` | Bar, game mode, night light, opacity, update, and doctor actions | `overview` |
 | `session` | Lock and confirmed disruptive power/session actions | `overview` |
+| `settings-foundation` | Shared page frame, sections, rows, metrics, states, search, and confirmations | `panel-motion` |
+| `system-page` | Hardware identity, live metrics, and refresh behavior | `settings-foundation` |
+| `audio-page` | Output, input, routing, and per-application streams | `settings-foundation` |
+| `display-page` | Monitor selection and per-monitor layout controls | `settings-foundation` |
+| `network-page` | Active connection, Wi-Fi scanning, and secure connection UI | `settings-foundation` |
+| `bluetooth-page` | Adapter, paired devices, discovery, and connection actions | `settings-foundation` |
+| `storage-page` | Drive/filesystem usage and confirmed cleanup actions | `settings-foundation` |
+| `configs-page` | Searchable grouped configuration launcher/editor | `settings-foundation` |
 
-Build order: `panel-motion` → `overview` → `appearance` → `shortcuts` → `desktop-controls` → `session`.
+Build order: shared shell and Kome overview → `settings-foundation` → `system-page` → `audio-page` → `display-page` → `network-page` → `bluetooth-page` → `storage-page` → `configs-page` → `shortcuts` → `desktop-controls` → `session`.
 
 ## Tech Stack
 
@@ -80,11 +88,24 @@ Destructive runtime checks are manual only. Automated tests must never log out, 
 config/quickshell/
   PerspectivePanel.qml       # panel motion and reduced-motion behavior
   SettingsWindow.qml          # shell, navigation, page transitions, IPC
+  SettingsPage.qml            # shared page frame and scroll geometry
+  SettingsSection.qml         # shared section hierarchy
+  SettingsRow.qml             # shared label/value/action row
+  MetricCard.qml              # live metric and optional sparkline
+  StatePill.qml               # semantic compact status
+  SettingsSearch.qml          # shared keyboard filter
+  EmptyState.qml              # shared no-data/error state
+  ConfirmDialog.qml           # shared confirmation and destructive styling
   SettingsPages/
     KomePage.qml              # overview, appearance, controls, session
     ShortcutsPage.qml         # searchable keybind reference
-    SystemPage.qml            # existing hardware overview
-    ...                       # existing settings pages remain unchanged
+    SystemPage.qml            # revamped hardware overview
+    SoundPage.qml             # revamped audio routing and streams
+    MonitorsPage.qml          # revamped per-monitor controls
+    NetworkPage.qml           # revamped connection manager
+    BluetoothPage.qml         # revamped device manager
+    StoragePage.qml           # revamped capacity and cleanup
+    ConfigsPage.qml           # revamped searchable config launcher
 
 scripts/
   kome-theme                   # theme state interfaces
@@ -93,6 +114,7 @@ scripts/
 
 tests/
   kome-hub.sh                  # static hub contract and script regressions
+  settings-pages.sh            # shared page and seven-page redesign contracts
 ```
 
 No `tasks/plan.md` or `tasks/todo.md` will be created.
@@ -149,7 +171,7 @@ Conventions:
 
 ### Always
 
-- Preserve all seven existing settings pages.
+- Preserve all seven existing page filenames, IPC names, and provider contracts while revamping their implementation.
 - Use `Theme.danger` for logout, reboot, and shutdown confirmation/actions.
 - Require confirmation for logout, suspend, reboot, and shutdown.
 - Keep command arguments separately quoted and validate page/action identifiers.
@@ -181,14 +203,15 @@ Conventions:
 - The keybind page loads the same data as `kome-keybinds --list` and filters by key or description.
 - Every asynchronous control has busy and feedback behavior.
 - Disruptive session actions require visible confirmation and use destructive styling.
-- Existing settings pages remain reachable and retain their IPC behavior.
+- All seven settings pages use the shared frame, semantic tokens, consistent gutters, complete interaction states, and page-specific loading/error/empty behavior.
+- System, Audio, Display, Network, Bluetooth, Storage, and Configs retain their capabilities while fixing the audited per-page defects.
 - Repository tests, ShellCheck, Hyprland verification, and Quickshell startup checks pass.
 - The live panel is visually inspected; unverified areas are reported explicitly.
 - Work is committed and pushed with a clean working tree.
 
 ## Open Questions
 
-None. The user approved the full six-capability scope and preservation of existing pages.
+None. The user approved the full hub plus the complete seven-page revamp and the page-by-page implementation order.
 
 ## Implementation Slices
 
@@ -275,3 +298,44 @@ None. The user approved the full six-capability scope and preservation of existi
 **Verification:** Full command set from this spec, live screenshots/manual inspection, `git status`, and remote comparison.
 
 **Files:** Only files changed to fix issues found by verification.
+
+## Seven-Page Redesign Slices
+
+### 7. Shared settings foundation and System reference
+
+- Create the shared page frame, section, row, metric, state, search, empty, and confirmation components.
+- Rebuild System as the reference page with one performance lead, compact metrics, identity details, and safe polling.
+- Add `tests/settings-pages.sh` contracts before implementation.
+
+### 8. Audio redesign
+
+- Rebuild output, input, routing, and per-app streams with shared rows, focus states, and explicit empty/error feedback.
+
+### 9. Display redesign
+
+- Make monitor selection explicit and apply resolution/scale/position changes to the selected monitor.
+- Remove the hardcoded resolution list in favor of live monitor capabilities.
+
+### 10. Network redesign
+
+- Lead with active connectivity and throughput, then provide Wi-Fi scanning/search/connect states.
+- Clear password fields after use and never expose secrets in status output.
+
+### 11. Bluetooth redesign
+
+- Rebuild adapter and paired/available device management.
+- Remove the invalid device-change handler and missing-state-file warnings.
+
+### 12. Storage redesign
+
+- Lead with filesystem capacity, then drives and cleanup.
+- Move all destructive actions to the shared confirmation component and semantic tokens.
+
+### 13. Configs redesign
+
+- Add search and grouping, use `${EDITOR:-xed}`, and provide copy-path feedback.
+
+### 14. Remaining hub controls and final verification
+
+- Add Shortcuts, desktop controls, maintenance, and confirmed session controls.
+- Render and inspect every page, state, theme, and responsive edge; run all checks; commit and push each verified page.
