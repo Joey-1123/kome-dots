@@ -4,14 +4,14 @@ import QtQuick
 
 Item {
 
-    property int settingsWidth: 800
+    property int settingsWidth: 120
     property int settingsHeight: 10
-    property int settingsLeft: 150
-    property int settingsTop: 0
-    property int wallpaperWidth: 800
+    property int settingsLeft: 0
+    property int settingsTop: 30
+    property int wallpaperWidth: 120
     property int wallpaperHeight: 10
-    property int wallpaperRight: 150
-    property int wallpaperTop: 0
+    property int wallpaperRight: 0
+    property int wallpaperTop: 30
 
     PanelWindow {
         id: settingsTrigger

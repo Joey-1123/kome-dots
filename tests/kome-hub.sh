@@ -52,6 +52,14 @@ contains config/quickshell/SettingsWindow.qml 'rightMargin: 18' \
     "bottom-right corner accents do not overlap"
 contains config/quickshell/SettingsWindow.qml 'width: parent.width - sidebar.width - parent.spacing * 2 - 1' \
     "page content reserves both sidebar row gaps"
+contains config/quickshell/SettingsCornerTrigger.qml 'settingsTop: 30' \
+    "settings hot corner sits below the desktop bar"
+contains config/quickshell/SettingsCornerTrigger.qml 'wallpaperTop: 30' \
+    "wallpaper hot corner sits below the desktop bar"
+contains config/quickshell/SettingsCornerTrigger.qml 'settingsWidth: 120' \
+    "settings hot corner is a small corner target"
+contains config/quickshell/SettingsCornerTrigger.qml 'wallpaperWidth: 120' \
+    "wallpaper hot corner is a small corner target"
 missing config/quickshell/SettingsWindow.qml 'width: parent.width - sidebar.width - 29' \
     "page content does not use the overlapping legacy width"
 

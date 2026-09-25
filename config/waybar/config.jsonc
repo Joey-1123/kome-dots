@@ -34,8 +34,7 @@
         "format": " {temperatureC}°C",
         "format-critical": " {temperatureC}°C",
         "tooltip": true,
-        "tooltip-format": "CPU Temp: {temperatureC}°C",
-        "on-click": "~/.config/waybar/scripts/toggle-gammastep"
+        "tooltip-format": "CPU Temp: {temperatureC}°C"
     },
 
     "clock": {

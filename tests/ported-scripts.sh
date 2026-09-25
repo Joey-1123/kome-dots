@@ -98,6 +98,12 @@ if grep -Fq 'background-color: rgba(20, 20, 20, 0.5)' "$waybar_style" \
 else
     fail "Waybar uses the compact reference surface treatment"
 fi
+if grep -Fq '"on-click": "pavucontrol"' "$waybar_config" \
+    && ! grep -Fq 'toggle-gammastep' "$waybar_config"; then
+    pass "Waybar click actions do not repurpose temperature clicks"
+else
+    fail "Waybar click actions do not repurpose temperature clicks"
+fi
 for helper in gpu_usage.sh mpris-marquee.sh playerctl-active.sh toggle-gammastep; do
     if [[ -x "$ROOT/config/waybar/scripts/$helper" ]]; then
         pass "Waybar helper $helper is executable"
